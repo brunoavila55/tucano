@@ -11,6 +11,8 @@
                     {% csrf_token %}
                     <button type="submit" class="text-sm underline">Selecionar</button>
                 </form>
+            {% elif interest.status == "selected" %}
+                <a href="{% url 'chat:detail' interest.pk %}" class="text-sm underline">Conversar</a>
             {% endif %}
         </li>
     {% empty %}

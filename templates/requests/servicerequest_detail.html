@@ -47,6 +47,8 @@
                 {% csrf_token %}
                 <button type="submit" class="text-sm underline">Retirar interesse</button>
             </form>
+        {% elif my_interest.status == "selected" %}
+            <a href="{% url 'chat:detail' my_interest.pk %}" class="text-sm underline">Conversar</a>
         {% endif %}
     </div>
 {% elif interest_form %}

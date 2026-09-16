@@ -1,6 +1,7 @@
 from django.core.exceptions import ValidationError
 from django.utils import timezone
 
+from apps.chat.models import Conversation
 from apps.moderation.audit import log_event
 
 from .models import Interest, ServiceRequest
@@ -30,6 +31,7 @@ def select_interest(interest, actor):
         service_request.status = ServiceRequest.Status.PARTIALLY_FILLED
         service_request.save(update_fields=["status"])
 
+    Conversation.objects.get_or_create(interest=interest)
     log_event(actor, "interest.selected", interest, service_request_id=service_request.pk)
     return interest
 
