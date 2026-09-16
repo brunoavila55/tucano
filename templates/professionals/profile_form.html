@@ -1,17 +1,77 @@
 {% extends "base.html" %}
 
-{% block title %}Criar perfil de profissional — Tucano{% endblock %}
+{% block title %}Perfil de profissional — Tucano{% endblock %}
 
 {% block content %}
-<h1 class="text-xl font-semibold mb-4">Criar perfil de profissional</h1>
+<h1 class="text-xl font-semibold mb-4">Perfil de profissional</h1>
 <form method="post" class="space-y-4 max-w-md">
     {% csrf_token %}
     {{ form.non_field_errors }}
+
+    <div>
+        <label class="block text-sm font-medium mb-1" for="{{ form.main_category.id_for_label }}">Categoria principal</label>
+        {{ form.main_category }}
+        {{ form.main_category.errors }}
+    </div>
+
     <div>
         <label class="block text-sm font-medium mb-1" for="{{ form.bio.id_for_label }}">Bio curta</label>
         {{ form.bio }}
         {{ form.bio.errors }}
     </div>
+
+    <div>
+        <label class="block text-sm font-medium mb-1" for="{{ form.skills.id_for_label }}">Habilidades (separadas por vírgula)</label>
+        {{ form.skills }}
+        {{ form.skills.errors }}
+    </div>
+
+    <div>
+        <label class="block text-sm font-medium mb-1" for="{{ form.reference_price.id_for_label }}">Preço de referência (opcional)</label>
+        {{ form.reference_price }}
+        {{ form.reference_price.errors }}
+    </div>
+
+    <div>
+        <label class="block text-sm font-medium mb-1" for="{{ form.location_label.id_for_label }}">Região exibida publicamente (ex.: bairro, cidade)</label>
+        {{ form.location_label }}
+        {{ form.location_label.errors }}
+        <p class="text-xs text-gray-500 mt-1">Nunca mostramos seu endereço exato — só a distância aproximada.</p>
+    </div>
+
+    <div>
+        <button type="button" id="use-location" class="text-sm underline">Usar minha localização atual</button>
+        <p id="location-status" class="text-xs text-gray-500 mt-1"></p>
+        {{ form.latitude }}
+        {{ form.longitude }}
+    </div>
+
+    <div class="flex items-center gap-2">
+        {{ form.is_available_now }}
+        <label class="text-sm" for="{{ form.is_available_now.id_for_label }}">Disponível agora</label>
+    </div>
+
     <button type="submit" class="rounded bg-gray-900 text-white px-4 py-2 text-sm font-medium">Salvar</button>
 </form>
+
+<script>
+    document.getElementById("use-location").addEventListener("click", function () {
+        const status = document.getElementById("location-status");
+        if (!navigator.geolocation) {
+            status.textContent = "Geolocalização não suportada neste navegador.";
+            return;
+        }
+        status.textContent = "Obtendo localização...";
+        navigator.geolocation.getCurrentPosition(
+            function (position) {
+                document.getElementById("id_latitude").value = position.coords.latitude;
+                document.getElementById("id_longitude").value = position.coords.longitude;
+                status.textContent = "Localização obtida.";
+            },
+            function () {
+                status.textContent = "Não foi possível obter sua localização.";
+            }
+        );
+    });
+</script>
 {% endblock %}

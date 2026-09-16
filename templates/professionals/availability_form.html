@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+
+{% block title %}Adicionar disponibilidade — Tucano{% endblock %}
+
+{% block content %}
+<h1 class="text-xl font-semibold mb-4">Adicionar disponibilidade</h1>
+<form method="post" class="space-y-4 max-w-sm">
+    {% csrf_token %}
+    {{ form.non_field_errors }}
+    <div>
+        <label class="block text-sm font-medium mb-1" for="{{ form.weekday.id_for_label }}">Dia da semana</label>
+        {{ form.weekday }}
+    </div>
+    <div>
+        <label class="block text-sm font-medium mb-1" for="{{ form.start_time.id_for_label }}">Início</label>
+        {{ form.start_time }}
+    </div>
+    <div>
+        <label class="block text-sm font-medium mb-1" for="{{ form.end_time.id_for_label }}">Fim</label>
+        {{ form.end_time }}
+    </div>
+    <button type="submit" class="rounded bg-gray-900 text-white px-4 py-2 text-sm font-medium">Salvar</button>
+</form>
+{% endblock %}

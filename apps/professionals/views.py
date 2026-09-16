@@ -1,16 +1,19 @@
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.contrib.gis.db.models.functions import Distance
+from django.contrib.gis.geos import Point
 from django.shortcuts import redirect
 from django.urls import reverse_lazy
-from django.views.generic import CreateView, TemplateView
+from django.views.generic import CreateView, DeleteView, ListView, TemplateView, UpdateView
 
 from apps.accounts.mixins import ProfessionalRequiredMixin
 
-from .models import ProfessionalProfile
+from .forms import AvailabilityForm, PortfolioItemForm, ProfessionalProfileForm
+from .models import Availability, PortfolioItem, ProfessionalProfile, ServiceCategory
 
 
 class ProfessionalProfileCreateView(LoginRequiredMixin, CreateView):
     model = ProfessionalProfile
-    fields = ["bio"]
+    form_class = ProfessionalProfileForm
     template_name = "professionals/profile_form.html"
     success_url = reverse_lazy("professionals:dashboard")
 
@@ -24,5 +27,104 @@ class ProfessionalProfileCreateView(LoginRequiredMixin, CreateView):
         return super().form_valid(form)
 
 
+class ProfessionalProfileUpdateView(ProfessionalRequiredMixin, UpdateView):
+    model = ProfessionalProfile
+    form_class = ProfessionalProfileForm
+    template_name = "professionals/profile_form.html"
+    success_url = reverse_lazy("professionals:dashboard")
+
+    def get_object(self, queryset=None):
+        return self.request.user.professional_profile
+
+
 class ProfessionalDashboardView(ProfessionalRequiredMixin, TemplateView):
     template_name = "professionals/dashboard.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        profile = self.request.user.professional_profile
+        context["profile"] = profile
+        context["availabilities"] = profile.availabilities.all()
+        context["portfolio_items"] = profile.portfolio_items.all()
+        return context
+
+
+class AvailabilityCreateView(ProfessionalRequiredMixin, CreateView):
+    model = Availability
+    form_class = AvailabilityForm
+    template_name = "professionals/availability_form.html"
+    success_url = reverse_lazy("professionals:dashboard")
+
+    def form_valid(self, form):
+        form.instance.professional = self.request.user.professional_profile
+        return super().form_valid(form)
+
+
+class AvailabilityDeleteView(ProfessionalRequiredMixin, DeleteView):
+    model = Availability
+    success_url = reverse_lazy("professionals:dashboard")
+    template_name = "professionals/availability_confirm_delete.html"
+
+    def get_queryset(self):
+        return Availability.objects.filter(professional=self.request.user.professional_profile)
+
+
+class PortfolioItemCreateView(ProfessionalRequiredMixin, CreateView):
+    model = PortfolioItem
+    form_class = PortfolioItemForm
+    template_name = "professionals/portfolio_form.html"
+    success_url = reverse_lazy("professionals:dashboard")
+
+    def form_valid(self, form):
+        form.instance.professional = self.request.user.professional_profile
+        return super().form_valid(form)
+
+
+class PortfolioItemDeleteView(ProfessionalRequiredMixin, DeleteView):
+    model = PortfolioItem
+    success_url = reverse_lazy("professionals:dashboard")
+    template_name = "professionals/portfolio_confirm_delete.html"
+
+    def get_queryset(self):
+        return PortfolioItem.objects.filter(professional=self.request.user.professional_profile)
+
+
+class ProfessionalSearchView(ListView):
+    model = ProfessionalProfile
+    template_name = "professionals/search.html"
+    context_object_name = "professionals"
+    paginate_by = 10
+
+    def get_queryset(self):
+        qs = ProfessionalProfile.objects.select_related("main_category").exclude(location__isnull=True)
+
+        category_slug = self.request.GET.get("categoria")
+        if category_slug:
+            qs = qs.filter(main_category__slug=category_slug)
+
+        lat = self.request.GET.get("lat")
+        lon = self.request.GET.get("lon")
+        origin = self._parse_point(lat, lon)
+        if origin is not None:
+            return qs.annotate(distance=Distance("location", origin)).order_by("distance")
+        return qs.order_by("-created_at")
+
+    @staticmethod
+    def _parse_point(lat, lon):
+        try:
+            return Point(float(lon), float(lat), srid=4326)
+        except (TypeError, ValueError):
+            return None
+
+    def get_template_names(self):
+        if self.request.headers.get("HX-Request"):
+            return ["professionals/_search_results.html"]
+        return [self.template_name]
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["categories"] = ServiceCategory.objects.filter(is_active=True)
+        context["selected_category"] = self.request.GET.get("categoria", "")
+        context["lat"] = self.request.GET.get("lat", "")
+        context["lon"] = self.request.GET.get("lon", "")
+        return context
