@@ -20,6 +20,15 @@ SECRET_KEY = env("DJANGO_SECRET_KEY", default="insecure-dev-key-change-me")
 DEBUG = env("DJANGO_DEBUG")
 ALLOWED_HOSTS = env.list("DJANGO_ALLOWED_HOSTS", default=["localhost", "127.0.0.1"])
 
+# O Caddy termina TLS e repassa pro Daphne em HTTP puro (docker/Caddyfile) —
+# sem isso, o Django acha que a conexão é HTTP e a checagem de CSRF rejeita
+# o Origin "https://..." que o navegador realmente enviou.
+SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+CSRF_TRUSTED_ORIGINS = env.list(
+    "CSRF_TRUSTED_ORIGINS",
+    default=[f"https://{env('DOMAIN', default='localhost')}", "https://localhost:8443", "http://localhost:8080"],
+)
+
 INSTALLED_APPS = [
     "django.contrib.admin",
     "django.contrib.auth",
