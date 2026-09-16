@@ -46,6 +46,7 @@
                 {% csrf_token %}
                 <label class="block text-sm font-medium" for="{{ review_form.rating.id_for_label }}">Nota (1 a 5) para {{ target_user }}</label>
                 {{ review_form.rating }}
+                <label class="block text-sm font-medium" for="{{ review_form.comment.id_for_label }}">Comentário (opcional)</label>
                 {{ review_form.comment }}
                 <button type="submit" class="rounded bg-gray-900 text-white px-4 py-2 text-sm font-medium">Enviar avaliação</button>
             </form>
@@ -59,6 +60,7 @@
                 {% else %}
                     <form method="post" action="{% url 'reviews:review-contest' other_review.pk %}" class="mt-2 space-y-2">
                         {% csrf_token %}
+                        <label class="block text-sm font-medium" for="{{ contest_form.reason.id_for_label }}">Motivo da contestação</label>
                         {{ contest_form.reason }}
                         <button type="submit" class="text-sm text-red-600 underline">Contestar esta avaliação</button>
                     </form>

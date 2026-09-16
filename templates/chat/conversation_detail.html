@@ -37,6 +37,7 @@
 </div>
 
 <form id="message-form" class="flex gap-2">
+    <label for="message-input" class="sr-only">Mensagem</label>
     <input type="text" id="message-input" maxlength="1000" class="flex-1 border rounded px-2 py-1" placeholder="Digite uma mensagem..." {% if is_blocked_by_other %}disabled{% endif %}>
     <button type="submit" class="rounded bg-gray-900 text-white px-4 py-2 text-sm font-medium" {% if is_blocked_by_other %}disabled{% endif %}>Enviar</button>
 </form>

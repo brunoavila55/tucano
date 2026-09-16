@@ -16,6 +16,7 @@
             {% elif case.status == "decided" %}
                 <form method="post" action="{% url 'moderation:appeal-case' case.pk %}" class="mt-2 space-y-2 max-w-sm">
                     {% csrf_token %}
+                    <label class="block text-sm font-medium" for="{{ appeal_form.reason.id_for_label }}">Motivo do recurso</label>
                     {{ appeal_form.reason }}
                     <button type="submit" class="rounded border border-gray-300 px-3 py-1.5 text-sm">Recorrer desta decisão</button>
                 </form>

@@ -44,7 +44,7 @@
     <div class="grid grid-cols-3 gap-2">
         {% for item in portfolio_items %}
             <div class="relative">
-                <img src="{{ item.image.url }}" alt="{{ item.caption }}" class="rounded w-full h-24 object-cover">
+                <img src="{{ item.image.url }}" alt="{{ item.caption|default:"Foto do portfólio" }}" class="rounded w-full h-24 object-cover">
                 <a href="{% url 'professionals:portfolio-delete' item.pk %}" class="absolute top-1 right-1 text-xs bg-white/80 rounded px-1">excluir</a>
             </div>
         {% empty %}
