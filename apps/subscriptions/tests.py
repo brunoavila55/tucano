@@ -100,6 +100,32 @@ class MercadoPagoWebhookTest(TestCase):
 
 
 class SubscribeViewTest(TestCase):
+    def setUp(self):
+        from django.core.cache import cache
+
+        cache.clear()
+
+    def test_subscribe_is_rate_limited(self):
+        User = get_user_model()
+        user = User.objects.create_user(username="ratelimit1", email="ratelimit1@example.com", password="senha-forte-123")
+        self.client.force_login(user)
+        for _ in range(5):
+            self.client.post(reverse("subscriptions:subscribe"))
+        response = self.client.post(reverse("subscriptions:subscribe"))
+        self.assertEqual(response.status_code, 403)
+
+    def test_disabled_feature_flag_blocks_new_signups(self):
+        from apps.moderation.models import FeatureFlag
+
+        FeatureFlag.objects.create(key="premium_signups_enabled", is_enabled=False)
+        User = get_user_model()
+        user = User.objects.create_user(username="ratelimit2", email="ratelimit2@example.com", password="senha-forte-123")
+        self.client.force_login(user)
+
+        response = self.client.post(reverse("subscriptions:subscribe"))
+        self.assertEqual(response.status_code, 302)
+        self.assertFalse(Subscription.for_user(user).is_premium)
+
     def test_subscribe_without_mercadopago_configured_shows_error_and_grants_nothing(self):
         User = get_user_model()
         user = User.objects.create_user(username="sub2", email="sub2@example.com", password="senha-forte-123")

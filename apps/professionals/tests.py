@@ -201,3 +201,14 @@ class BoostRankingTest(TestCase):
         self.assertEqual(results[0].pk, self.far_compatible.pk)
         self.assertTrue(results[0].is_boosted)
         self.assertFalse(results[1].is_boosted)
+
+    def test_disabling_the_feature_flag_falls_back_to_distance_ordering(self):
+        from apps.moderation.models import FeatureFlag
+
+        FeatureFlag.objects.create(key="boost_ranking_enabled", is_enabled=False)
+        response = self.client.get(
+            reverse("professionals:search"),
+            {"categoria": self.category_a.slug, "lat": "-23.55", "lon": "-46.64"},
+        )
+        results = list(response.context["professionals"])
+        self.assertEqual(results[0].pk, self.near_compatible.pk)

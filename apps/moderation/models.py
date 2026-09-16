@@ -1,6 +1,8 @@
 from django.conf import settings
 from django.db import models
 
+from .validators import validate_file_size
+
 
 class AuditEvent(models.Model):
     """Trilha de auditoria para fluxos sensíveis (AGENTS.md — Entidades conceituais).
@@ -85,7 +87,7 @@ class Verification(models.Model):
         REJECTED = "rejected", "Rejeitada"
 
     user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="verifications")
-    document = models.FileField(upload_to="verification_documents/")
+    document = models.FileField(upload_to="verification_documents/", validators=[validate_file_size])
     # Finalidade fixa e clara (não é texto livre do usuário) — consentimento
     # é dado explicitamente no formulário de solicitação.
     purpose = models.CharField(max_length=150)
@@ -106,3 +108,22 @@ class Verification(models.Model):
 
     def __str__(self):
         return f"Verificação de {self.user} — {self.get_status_display()}"
+
+
+class FeatureFlag(models.Model):
+    """Liga/desliga experimentos de ranking e Premium sem precisar de deploy
+    (AGENTS.md — Princípios de engenharia: "use feature flags para
+    experimentos de ranking e Premium")."""
+
+    key = models.SlugField(max_length=80, unique=True)
+    is_enabled = models.BooleanField(default=False)
+    description = models.CharField(max_length=255, blank=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    @classmethod
+    def is_active(cls, key, default=False):
+        flag = cls.objects.filter(key=key).first()
+        return flag.is_enabled if flag else default
+
+    def __str__(self):
+        return f"{self.key}: {'ligado' if self.is_enabled else 'desligado'}"

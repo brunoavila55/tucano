@@ -4,6 +4,8 @@ from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils.text import slugify
 
+from apps.moderation.validators import validate_file_size
+
 # AGENTS.md — "Foco inicial recomendado": categorias bloqueadas por risco
 # jurídico direto a terceiros ou restrição de publicidade (ex.: OAB para
 # advocacia), não apenas por terem conselho de classe.
@@ -119,7 +121,7 @@ class PortfolioItem(models.Model):
     professional = models.ForeignKey(
         ProfessionalProfile, on_delete=models.CASCADE, related_name="portfolio_items"
     )
-    image = models.ImageField(upload_to="portfolio/")
+    image = models.ImageField(upload_to="portfolio/", validators=[validate_file_size])
     caption = models.CharField(max_length=150, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 

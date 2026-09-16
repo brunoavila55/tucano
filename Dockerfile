@@ -6,12 +6,14 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     UV_LINK_MODE=copy
 
 # GDAL/GEOS/PROJ para django.contrib.gis (stack.md §4) + libpq para psycopg.
+# postgresql-client dá o pg_dump usado no backup automatizado (Etapa 11).
 RUN apt-get update && apt-get install -y --no-install-recommends \
     binutils \
     gdal-bin \
     libgdal-dev \
     libproj-dev \
     libpq-dev \
+    postgresql-client \
     gcc \
     && rm -rf /var/lib/apt/lists/*
 

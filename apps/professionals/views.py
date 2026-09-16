@@ -1,13 +1,15 @@
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.gis.db.models.functions import Distance
 from django.contrib.gis.geos import Point
-from django.db.models import Exists, OuterRef
+from django.db.models import BooleanField, Exists, OuterRef, Value
 from django.shortcuts import redirect
 from django.urls import reverse_lazy
 from django.utils import timezone
 from django.views.generic import CreateView, DeleteView, ListView, TemplateView, UpdateView
 
 from apps.accounts.mixins import ProfessionalRequiredMixin
+from apps.accounts.ratelimit import RateLimitMixin
+from apps.moderation.models import FeatureFlag
 from apps.subscriptions.models import Boost
 
 from .forms import AvailabilityForm, PortfolioItemForm, ProfessionalProfileForm
@@ -72,11 +74,13 @@ class AvailabilityDeleteView(ProfessionalRequiredMixin, DeleteView):
         return Availability.objects.filter(professional=self.request.user.professional_profile)
 
 
-class PortfolioItemCreateView(ProfessionalRequiredMixin, CreateView):
+class PortfolioItemCreateView(RateLimitMixin, ProfessionalRequiredMixin, CreateView):
     model = PortfolioItem
     form_class = PortfolioItemForm
     template_name = "professionals/portfolio_form.html"
     success_url = reverse_lazy("professionals:dashboard")
+    rate_limit_count = 20
+    rate_limit_window = 3600
 
     def form_valid(self, form):
         form.instance.professional = self.request.user.professional_profile
@@ -107,10 +111,14 @@ class ProfessionalSearchView(ListView):
 
         # Boost só reordena dentro do conjunto já compatível (categoria/região
         # filtradas acima) — nunca promove um perfil incompatível
-        # (AGENTS.md — "Encontrar profissionais").
-        now = timezone.now()
-        active_boosts = Boost.objects.filter(professional=OuterRef("pk"), starts_at__lte=now, ends_at__gte=now)
-        qs = qs.annotate(is_boosted=Exists(active_boosts))
+        # (AGENTS.md — "Encontrar profissionais"). Flag desliga o experimento
+        # sem precisar de deploy.
+        if FeatureFlag.is_active("boost_ranking_enabled", default=True):
+            now = timezone.now()
+            active_boosts = Boost.objects.filter(professional=OuterRef("pk"), starts_at__lte=now, ends_at__gte=now)
+            qs = qs.annotate(is_boosted=Exists(active_boosts))
+        else:
+            qs = qs.annotate(is_boosted=Value(False, output_field=BooleanField()))
 
         lat = self.request.GET.get("lat")
         lon = self.request.GET.get("lon")

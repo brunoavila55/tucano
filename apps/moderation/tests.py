@@ -1,11 +1,18 @@
+from pathlib import Path
+
 from django.contrib.auth import authenticate, get_user_model
-from django.core.exceptions import ValidationError
+from django.core.cache import cache
+from django.core.exceptions import PermissionDenied, ValidationError
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase
 from django.urls import reverse
 
+from apps.accounts.ratelimit import enforce_rate_limit
+
 from . import services
-from .models import ModerationCase, Verification
+from .backup import run_postgres_backup
+from .models import FeatureFlag, ModerationCase, Verification
+from .validators import MAX_UPLOAD_SIZE_MB, validate_file_size
 
 TINY_GIF = (
     b"GIF87a\x01\x00\x01\x00\x80\x00\x00\x00\x00\x00\xff\xff\xff!\xf9\x04\x01\x00"
@@ -144,3 +151,56 @@ class VerificationRequestTest(TestCase):
         )
         self.assertEqual(response.status_code, 200)  # form_invalid re-renderiza
         self.assertFalse(Verification.objects.filter(user=user).exists())
+
+
+class FeatureFlagTest(TestCase):
+    def test_defaults_to_provided_default_when_flag_missing(self):
+        self.assertTrue(FeatureFlag.is_active("nao-existe", default=True))
+        self.assertFalse(FeatureFlag.is_active("nao-existe", default=False))
+
+    def test_explicit_flag_overrides_default(self):
+        FeatureFlag.objects.create(key="minha-flag", is_enabled=True)
+        self.assertTrue(FeatureFlag.is_active("minha-flag", default=False))
+
+
+class RateLimitTest(TestCase):
+    def setUp(self):
+        cache.clear()
+
+    def test_enforce_rate_limit_blocks_after_threshold(self):
+        for _ in range(3):
+            enforce_rate_limit("chave-teste-1", limit=3, window_seconds=60)
+        with self.assertRaises(PermissionDenied):
+            enforce_rate_limit("chave-teste-1", limit=3, window_seconds=60)
+
+    def test_different_keys_have_independent_counters(self):
+        for _ in range(3):
+            enforce_rate_limit("chave-teste-2", limit=3, window_seconds=60)
+        enforce_rate_limit("chave-teste-3", limit=3, window_seconds=60)  # não deve levantar
+
+    def test_admin_login_is_rate_limited(self):
+        for _ in range(10):
+            self.client.post(reverse("admin:login"), {"username": "x", "password": "y"})
+        response = self.client.post(reverse("admin:login"), {"username": "x", "password": "y"})
+        self.assertEqual(response.status_code, 403)
+
+
+class FileSizeValidatorTest(TestCase):
+    def test_rejects_file_larger_than_limit(self):
+        big_file = SimpleUploadedFile("big.gif", b"0" * (MAX_UPLOAD_SIZE_MB * 1024 * 1024 + 1))
+        with self.assertRaises(ValidationError):
+            validate_file_size(big_file)
+
+    def test_accepts_file_within_limit(self):
+        small_file = SimpleUploadedFile("small.gif", b"0" * 100)
+        validate_file_size(small_file)
+
+
+class BackupTest(TestCase):
+    def test_run_postgres_backup_creates_a_non_empty_file(self):
+        path = Path(run_postgres_backup())
+        try:
+            self.assertTrue(path.exists())
+            self.assertGreater(path.stat().st_size, 0)
+        finally:
+            path.unlink(missing_ok=True)

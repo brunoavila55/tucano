@@ -6,12 +6,17 @@ from django.shortcuts import get_object_or_404, redirect
 from django.urls import reverse
 from django.views.generic import CreateView, ListView, View
 
+from apps.accounts.ratelimit import RateLimitMixin
+
 from . import services
 from .forms import VERIFICATION_PURPOSE, AppealForm, ReportUserForm, VerificationRequestForm
 from .models import ModerationCase, Verification
 
 
-class ReportUserCreateView(LoginRequiredMixin, View):
+class ReportUserCreateView(RateLimitMixin, LoginRequiredMixin, View):
+    rate_limit_count = 10
+    rate_limit_window = 3600
+
     def post(self, request, user_id):
         reported_user = get_object_or_404(get_user_model(), pk=user_id)
         form = ReportUserForm(request.POST)
@@ -55,10 +60,12 @@ class AppealCaseView(LoginRequiredMixin, View):
         return redirect("moderation:my-cases")
 
 
-class VerificationRequestCreateView(LoginRequiredMixin, CreateView):
+class VerificationRequestCreateView(RateLimitMixin, LoginRequiredMixin, CreateView):
     model = Verification
     form_class = VerificationRequestForm
     template_name = "moderation/verification_form.html"
+    rate_limit_count = 5
+    rate_limit_window = 3600
 
     def form_valid(self, form):
         form.instance.user = self.request.user

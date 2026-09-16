@@ -12,6 +12,8 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.generic import TemplateView, View
 
 from apps.accounts.mixins import ProfessionalRequiredMixin
+from apps.accounts.ratelimit import RateLimitMixin
+from apps.moderation.models import FeatureFlag
 
 from . import gateway
 from .models import Boost, Subscription
@@ -27,8 +29,14 @@ class PlanView(LoginRequiredMixin, TemplateView):
         return context
 
 
-class SubscribeView(LoginRequiredMixin, View):
+class SubscribeView(RateLimitMixin, LoginRequiredMixin, View):
+    rate_limit_count = 5
+    rate_limit_window = 3600
+
     def post(self, request):
+        if not FeatureFlag.is_active("premium_signups_enabled", default=True):
+            messages.error(request, "Novas assinaturas Premium estão pausadas no momento.")
+            return redirect("subscriptions:plan")
         if not gateway.is_configured():
             messages.error(request, "Assinatura Premium indisponível no momento (pagamento não configurado).")
             return redirect("subscriptions:plan")
@@ -42,7 +50,7 @@ class SubscribeView(LoginRequiredMixin, View):
         return redirect(init_point)
 
 
-class CancelSubscriptionView(LoginRequiredMixin, View):
+class CancelSubscriptionView(RateLimitMixin, LoginRequiredMixin, View):
     def post(self, request):
         subscription = Subscription.for_user(request.user)
         gateway.cancel_preapproval(subscription)

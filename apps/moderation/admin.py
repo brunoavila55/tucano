@@ -3,7 +3,13 @@ from django.core.exceptions import ValidationError
 from django.utils import timezone
 
 from . import services
-from .models import AuditEvent, ModerationCase, Verification
+from .models import AuditEvent, FeatureFlag, ModerationCase, Verification
+
+
+@admin.register(FeatureFlag)
+class FeatureFlagAdmin(admin.ModelAdmin):
+    list_display = ["key", "is_enabled", "description", "updated_at"]
+    list_editable = ["is_enabled"]
 
 
 @admin.register(AuditEvent)

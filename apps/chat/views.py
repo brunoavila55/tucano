@@ -21,9 +21,16 @@ class ConversationDetailView(LoginRequiredMixin, DetailView):
             raise PermissionDenied
         return conversation
 
+    # Limite de histórico carregado de uma vez (AGENTS.md — "implemente
+    # paginação e limites... em busca, chat e avaliações").
+    MESSAGE_HISTORY_LIMIT = 50
+
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context["chat_messages"] = self.object.messages.select_related("sender")
+        recent = list(
+            self.object.messages.select_related("sender").order_by("-created_at")[: self.MESSAGE_HISTORY_LIMIT]
+        )
+        context["chat_messages"] = list(reversed(recent))
         context["other_user"] = self.object.other_party(self.request.user)
         context["is_blocked_by_other"] = services.is_blocked(self.object, self.request.user)
         return context

@@ -53,6 +53,7 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "allauth.account.middleware.AccountMiddleware",
+    "config.middleware.AdminLoginRateLimitMiddleware",
 ]
 
 ROOT_URLCONF = "config.urls"
@@ -95,10 +96,24 @@ CHANNEL_LAYERS = {
     },
 }
 
+# Cache compartilhado entre processos — usado pelo rate limiting do
+# allauth e pelos limites de apps.accounts.ratelimit (Etapa 11). Em teste,
+# usa cache local: o Redis real é um serviço de longa duração reaproveitado
+# entre execuções de `docker compose run`, então contadores de rate limit
+# vazariam de uma rodada de testes para a próxima.
+if "pytest" in sys.modules:
+    CACHES = {"default": {"BACKEND": "django.core.cache.backends.locmem.LocMemCache"}}
+else:
+    CACHES = {
+        "default": {
+            "BACKEND": "django.core.cache.backends.redis.RedisCache",
+            "LOCATION": REDIS_URL,
+        },
+    }
+
 CELERY_BROKER_URL = REDIS_URL
 CELERY_RESULT_BACKEND = REDIS_URL
 CELERY_TIMEZONE = "America/Sao_Paulo"
-# Ligado só em teste (via conftest.py) para não depender de worker/broker.
 # Roda as tasks Celery em processo durante os testes (sem broker/worker) —
 # detectar pytest é mais confiável aqui do que uma env var, porque o
 # settings module é importado pelo pytest-django antes de qualquer
@@ -133,6 +148,10 @@ CELERY_BEAT_SCHEDULE = {
     "ask-pending-confirmations": {
         "task": "apps.reviews.tasks.ask_pending_confirmations",
         "schedule": 300.0,
+    },
+    "backup-database-daily": {
+        "task": "apps.moderation.tasks.backup_database",
+        "schedule": 86400.0,
     },
 }
 
@@ -181,3 +200,23 @@ STORAGES = {
 }
 
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+# Logs estruturados (Etapa 11) — nunca logar senha, token ou documento
+# (ver apps/moderation/backup.py e apps/accounts/notifications.py, que só
+# registram tipo de evento e status, nunca o conteúdo sensível).
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "structured": {
+            "format": "%(asctime)s level=%(levelname)s logger=%(name)s msg=%(message)s",
+        },
+    },
+    "handlers": {
+        "console": {"class": "logging.StreamHandler", "formatter": "structured"},
+    },
+    "root": {"handlers": ["console"], "level": "INFO"},
+    "loggers": {
+        "django.security": {"handlers": ["console"], "level": "WARNING", "propagate": False},
+    },
+}
