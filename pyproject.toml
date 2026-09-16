@@ -13,6 +13,7 @@ dependencies = [
     "django-allauth>=65.19.3",
     "django-environ>=0.14.0",
     "django-storages>=1.14.6",
+    "mercadopago>=3.6.0",
     "pillow>=12.3.0",
     "psycopg[binary]>=3.3.5",
     "pywebpush>=2.5.0",

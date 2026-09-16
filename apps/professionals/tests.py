@@ -143,3 +143,61 @@ class ProfessionalSearchDistanceTest(TestCase):
         self.assertEqual(response.status_code, 200)
         pks = {p.pk for p in response.context["professionals"]}
         self.assertEqual(pks, {self.near.pk, self.far.pk})
+
+
+class BoostRankingTest(TestCase):
+    def setUp(self):
+        from datetime import timedelta
+
+        from django.utils import timezone
+
+        from apps.subscriptions.models import Boost
+
+        User = get_user_model()
+        self.category_a = ServiceCategory.objects.create(name="Categoria A boost")
+        self.category_b = ServiceCategory.objects.create(name="Categoria B boost")
+
+        far_user = User.objects.create_user(username="longe_boost", email="longe_boost@example.com", password="senha-forte-123")
+        self.far_compatible = ProfessionalProfile.objects.create(
+            user=far_user,
+            main_category=self.category_a,
+            location=Point(-38.5267, -3.7327, srid=4326),
+        )
+
+        near_user = User.objects.create_user(username="perto_boost", email="perto_boost@example.com", password="senha-forte-123")
+        self.near_compatible = ProfessionalProfile.objects.create(
+            user=near_user,
+            main_category=self.category_a,
+            location=Point(-46.64, -23.55, srid=4326),
+        )
+
+        incompatible_user = User.objects.create_user(
+            username="incompativel_boost", email="incompativel_boost@example.com", password="senha-forte-123"
+        )
+        self.incompatible_boosted = ProfessionalProfile.objects.create(
+            user=incompatible_user,
+            main_category=self.category_b,
+            location=Point(-46.63, -23.55, srid=4326),
+        )
+
+        now = timezone.now()
+        # Boost no "far" (categoria A) e no incompatível (categoria B) — o
+        # incompatível nunca deve aparecer numa busca pela categoria A.
+        Boost.objects.create(professional=self.far_compatible, starts_at=now - timedelta(days=1), ends_at=now + timedelta(days=1))
+        Boost.objects.create(professional=self.incompatible_boosted, starts_at=now - timedelta(days=1), ends_at=now + timedelta(days=1))
+
+    def test_boosted_incompatible_professional_never_outranks_compatible_ones(self):
+        response = self.client.get(reverse("professionals:search"), {"categoria": self.category_a.slug})
+        results = list(response.context["professionals"])
+        pks = [p.pk for p in results]
+        self.assertNotIn(self.incompatible_boosted.pk, pks)
+
+    def test_boosted_compatible_professional_ranks_before_non_boosted_compatible_even_if_farther(self):
+        response = self.client.get(
+            reverse("professionals:search"),
+            {"categoria": self.category_a.slug, "lat": "-23.55", "lon": "-46.64"},
+        )
+        results = list(response.context["professionals"])
+        self.assertEqual(results[0].pk, self.far_compatible.pk)
+        self.assertTrue(results[0].is_boosted)
+        self.assertFalse(results[1].is_boosted)

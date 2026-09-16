@@ -923,6 +923,18 @@ wheels = [
 ]
 
 [[package]]
+name = "mercadopago"
+version = "3.6.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "requests" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/76/1f/49c0d2439203ccdb032ad558f2ce98111cb550266e9e106ea74136b3ad4b/mercadopago-3.6.0.tar.gz", hash = "sha256:fcf6cb11f1d5505b9b237682b97e482a13cda0cbb4829de28a07028775f58632", size = 67484, upload-time = "2026-09-10T00:05:40.718Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/af/e6/ed2c481aa6cdf366d090976a95f753bfdac6ee0a5ff4622f1f8ee533d7a7/mercadopago-3.6.0-py3-none-any.whl", hash = "sha256:9a405991f8520ee36b2857bf7b2c8fbd701a5f429fc8f60fcf9fd2a9e664bb0f", size = 81318, upload-time = "2026-09-10T00:05:39.436Z" },
+]
+
+[[package]]
 name = "msgpack"
 version = "1.2.2"
 source = { registry = "https://pypi.org/simple" }
@@ -1610,6 +1622,7 @@ dependencies = [
     { name = "django-allauth" },
     { name = "django-environ" },
     { name = "django-storages" },
+    { name = "mercadopago" },
     { name = "pillow" },
     { name = "psycopg", extra = ["binary"] },
     { name = "pywebpush" },
@@ -1634,6 +1647,7 @@ requires-dist = [
     { name = "django-allauth", specifier = ">=65.19.3" },
     { name = "django-environ", specifier = ">=0.14.0" },
     { name = "django-storages", specifier = ">=1.14.6" },
+    { name = "mercadopago", specifier = ">=3.6.0" },
     { name = "pillow", specifier = ">=12.3.0" },
     { name = "psycopg", extras = ["binary"], specifier = ">=3.3.5" },
     { name = "pywebpush", specifier = ">=2.5.0" },

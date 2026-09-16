@@ -116,6 +116,12 @@ TWILIO_ACCOUNT_SID = env("TWILIO_ACCOUNT_SID", default="")
 TWILIO_AUTH_TOKEN = env("TWILIO_AUTH_TOKEN", default="")
 TWILIO_WHATSAPP_FROM = env("TWILIO_WHATSAPP_FROM", default="")
 
+# Monetização (stack.md §9) — em branco, assinatura fica indisponível em vez
+# de liberar Premium de graça (ver apps/subscriptions/gateway.py).
+MERCADOPAGO_ACCESS_TOKEN = env("MERCADOPAGO_ACCESS_TOKEN", default="")
+MERCADOPAGO_PREAPPROVAL_PLAN_ID = env("MERCADOPAGO_PREAPPROVAL_PLAN_ID", default="")
+PREMIUM_MONTHLY_PRICE = env.float("PREMIUM_MONTHLY_PRICE", default=29.90)
+
 # Expiração automática do chamado (AGENTS.md — "Janela de interesse e
 # seleção"): varredura periódica em vez de agendar uma tarefa por chamado,
 # para sobreviver a restart do worker/beat sem perder o job.

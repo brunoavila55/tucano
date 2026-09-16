@@ -8,6 +8,7 @@ from django.utils import timezone
 
 from apps.clients.models import ClientProfile
 from apps.professionals.models import ProfessionalProfile, ServiceCategory
+from apps.subscriptions.limits import can_client_publish_request
 
 
 class ServiceRequest(models.Model):
@@ -86,6 +87,11 @@ class ServiceRequest(models.Model):
                     "Você já tem um chamado recente e aberto para esta categoria. "
                     "Aguarde um pouco antes de publicar outro igual."
                 )
+
+        if self.pk is None and self.client_id:
+            allowed, message = can_client_publish_request(self.client.user)
+            if not allowed:
+                raise ValidationError(message)
 
     def save(self, *args, **kwargs):
         self.full_clean()

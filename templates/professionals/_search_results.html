@@ -2,7 +2,12 @@
 <ul class="space-y-3">
     {% for professional in professionals %}
         <li class="rounded border border-gray-200 bg-white p-4">
-            <p class="font-medium">{{ professional.user }} — {{ professional.main_category|default:"Sem categoria" }}</p>
+            <p class="font-medium">
+                {{ professional.user }} — {{ professional.main_category|default:"Sem categoria" }}
+                {% if professional.is_boosted %}
+                    <span class="inline-block ml-1 text-xs rounded bg-amber-100 text-amber-800 px-2 py-0.5">Destaque</span>
+                {% endif %}
+            </p>
             <p class="text-sm text-gray-600">{{ professional.location_label|default:"Região não informada" }}
                 {% if professional.distance %}
                     · a cerca de {{ professional.distance.km|floatformat:0 }} km

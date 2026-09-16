@@ -1,11 +1,14 @@
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.contrib.gis.db.models.functions import Distance
 from django.contrib.gis.geos import Point
+from django.db.models import Exists, OuterRef
 from django.shortcuts import redirect
 from django.urls import reverse_lazy
+from django.utils import timezone
 from django.views.generic import CreateView, DeleteView, ListView, TemplateView, UpdateView
 
 from apps.accounts.mixins import ProfessionalRequiredMixin
+from apps.subscriptions.models import Boost
 
 from .forms import AvailabilityForm, PortfolioItemForm, ProfessionalProfileForm
 from .models import Availability, PortfolioItem, ProfessionalProfile, ServiceCategory
@@ -102,12 +105,19 @@ class ProfessionalSearchView(ListView):
         if category_slug:
             qs = qs.filter(main_category__slug=category_slug)
 
+        # Boost só reordena dentro do conjunto já compatível (categoria/região
+        # filtradas acima) — nunca promove um perfil incompatível
+        # (AGENTS.md — "Encontrar profissionais").
+        now = timezone.now()
+        active_boosts = Boost.objects.filter(professional=OuterRef("pk"), starts_at__lte=now, ends_at__gte=now)
+        qs = qs.annotate(is_boosted=Exists(active_boosts))
+
         lat = self.request.GET.get("lat")
         lon = self.request.GET.get("lon")
         origin = self._parse_point(lat, lon)
         if origin is not None:
-            return qs.annotate(distance=Distance("location", origin)).order_by("distance")
-        return qs.order_by("-created_at")
+            return qs.annotate(distance=Distance("location", origin)).order_by("-is_boosted", "distance")
+        return qs.order_by("-is_boosted", "-created_at")
 
     @staticmethod
     def _parse_point(lat, lon):
