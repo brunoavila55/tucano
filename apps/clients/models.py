@@ -13,3 +13,20 @@ class ClientProfile(models.Model):
 
     def __str__(self):
         return f"Contratante: {self.user}"
+
+
+class Favorite(models.Model):
+    client = models.ForeignKey(ClientProfile, on_delete=models.CASCADE, related_name="favorites")
+    professional = models.ForeignKey(
+        "professionals.ProfessionalProfile", on_delete=models.CASCADE, related_name="favorited_by"
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-created_at"]
+        constraints = [
+            models.UniqueConstraint(fields=["client", "professional"], name="unique_favorite"),
+        ]
+
+    def __str__(self):
+        return f"{self.client} ❤ {self.professional}"

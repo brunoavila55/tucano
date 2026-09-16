@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+
+{% block title %}Favoritos — Tucano{% endblock %}
+
+{% block content %}
+<h1 class="text-xl font-semibold mb-4">Profissionais favoritos</h1>
+
+<ul class="space-y-3">
+    {% for favorite in favorites %}
+        <li class="rounded border border-gray-200 bg-white p-4 flex items-center justify-between">
+            <div>
+                <p class="font-medium">{{ favorite.professional.user }} — {{ favorite.professional.main_category|default:"Sem categoria" }}</p>
+                <p class="text-sm text-gray-600">{{ favorite.professional.location_label|default:"Região não informada" }}</p>
+            </div>
+            <div class="flex items-center gap-3">
+                <a href="{% url 'requests:create' %}?favorito={{ favorite.professional.pk }}" class="text-sm underline">Chamar novamente</a>
+                <form method="post" action="{% url 'clients:favorite-toggle' favorite.professional.pk %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="next" value="{% url 'clients:favorites' %}">
+                    <button type="submit" class="text-sm text-red-600 underline">Remover</button>
+                </form>
+            </div>
+        </li>
+    {% empty %}
+        <li class="text-gray-500 text-sm">Você ainda não tem profissionais favoritos.</li>
+    {% endfor %}
+</ul>
+{% endblock %}

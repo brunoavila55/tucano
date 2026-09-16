@@ -7,6 +7,7 @@ from django.views.generic import CreateView, DetailView, FormView, ListView, Vie
 
 from apps.accounts.mixins import ClientRequiredMixin, ProfessionalRequiredMixin
 from apps.moderation.audit import log_event
+from apps.professionals.models import ProfessionalProfile
 
 from . import services
 from .forms import CancelRequestForm, InterestForm, ServiceRequestForm
@@ -17,6 +18,19 @@ class ServiceRequestCreateView(ClientRequiredMixin, CreateView):
     model = ServiceRequest
     form_class = ServiceRequestForm
     template_name = "requests/servicerequest_form.html"
+
+    def get_initial(self):
+        """"Chamar novamente" (AGENTS.md): reaproveita categoria/região de um favorito."""
+        initial = super().get_initial()
+        favorito_id = self.request.GET.get("favorito")
+        if favorito_id:
+            professional = ProfessionalProfile.objects.filter(
+                pk=favorito_id, favorited_by__client=self.request.user.client_profile
+            ).first()
+            if professional:
+                initial["category"] = professional.main_category_id
+                initial["location_label"] = professional.location_label
+        return initial
 
     def form_valid(self, form):
         form.instance.client = self.request.user.client_profile

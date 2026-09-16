@@ -127,4 +127,10 @@ class ProfessionalSearchView(ListView):
         context["selected_category"] = self.request.GET.get("categoria", "")
         context["lat"] = self.request.GET.get("lat", "")
         context["lon"] = self.request.GET.get("lon", "")
+
+        user = self.request.user
+        if user.is_authenticated and hasattr(user, "client_profile"):
+            context["favorite_ids"] = set(
+                user.client_profile.favorites.values_list("professional_id", flat=True)
+            )
         return context

@@ -11,6 +11,17 @@
             {% if professional.is_available_now %}
                 <span class="inline-block mt-1 text-xs rounded bg-green-100 text-green-800 px-2 py-0.5">Disponível agora</span>
             {% endif %}
+            {% if favorite_ids is not None %}
+                <form method="post" action="{% url 'clients:favorite-toggle' professional.pk %}" class="mt-2">
+                    {% csrf_token %}
+                    <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                    {% if professional.pk in favorite_ids %}
+                        <button type="submit" class="text-sm text-red-600 underline">Remover dos favoritos</button>
+                    {% else %}
+                        <button type="submit" class="text-sm underline">Favoritar</button>
+                    {% endif %}
+                </form>
+            {% endif %}
         </li>
     {% empty %}
         <li class="text-gray-500 text-sm">Nenhum profissional encontrado.</li>
