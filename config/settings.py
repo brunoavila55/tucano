@@ -124,6 +124,10 @@ CELERY_BEAT_SCHEDULE = {
         "task": "apps.requests.tasks.expire_due_service_requests",
         "schedule": 30.0,
     },
+    "ask-pending-confirmations": {
+        "task": "apps.reviews.tasks.ask_pending_confirmations",
+        "schedule": 300.0,
+    },
 }
 
 AUTH_PASSWORD_VALIDATORS = [

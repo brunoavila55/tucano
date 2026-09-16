@@ -13,6 +13,7 @@
                 </form>
             {% elif interest.status == "selected" %}
                 <a href="{% url 'chat:detail' interest.pk %}" class="text-sm underline">Conversar</a>
+                <a href="{% url 'reviews:confirmation-detail' interest.pk %}" class="text-sm underline ml-2">Confirmar/avaliar</a>
             {% endif %}
         </li>
     {% empty %}
