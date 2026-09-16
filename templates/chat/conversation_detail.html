@@ -5,11 +5,24 @@
 {% block content %}
 <div class="flex items-center justify-between mb-4">
     <h1 class="text-xl font-semibold">Conversa com {{ other_user }}</h1>
-    <form method="post" action="{% url 'chat:block' conversation.interest_id %}">
-        {% csrf_token %}
-        <button type="submit" class="text-sm text-red-600 underline">Bloquear</button>
-    </form>
+    <div class="flex items-center gap-3">
+        <form method="post" action="{% url 'chat:block' conversation.interest_id %}">
+            {% csrf_token %}
+            <button type="submit" class="text-sm text-red-600 underline">Bloquear</button>
+        </form>
+    </div>
 </div>
+
+<details class="mb-4 text-sm">
+    <summary class="cursor-pointer text-red-600 underline">Denunciar {{ other_user }}</summary>
+    <form method="post" action="{% url 'moderation:report-user' other_user.pk %}" class="mt-2 space-y-2 max-w-sm">
+        {% csrf_token %}
+        <input type="hidden" name="next" value="{{ request.path }}">
+        <input type="hidden" name="context" value="Conversa #{{ conversation.pk }}">
+        <textarea name="reason" rows="2" maxlength="1000" class="w-full border rounded px-2 py-1" placeholder="Descreva o motivo" required></textarea>
+        <button type="submit" class="rounded border border-red-300 text-red-600 px-3 py-1.5 text-sm">Enviar denúncia</button>
+    </form>
+</details>
 
 {% if is_blocked_by_other %}
     <p class="text-sm text-gray-500 mb-4">Você não pode enviar mensagens nesta conversa.</p>

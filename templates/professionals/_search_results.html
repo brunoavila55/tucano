@@ -12,7 +12,7 @@
                 <span class="inline-block mt-1 text-xs rounded bg-green-100 text-green-800 px-2 py-0.5">Disponível agora</span>
             {% endif %}
             {% if favorite_ids is not None %}
-                <form method="post" action="{% url 'clients:favorite-toggle' professional.pk %}" class="mt-2">
+                <form method="post" action="{% url 'clients:favorite-toggle' professional.pk %}" class="mt-2 inline">
                     {% csrf_token %}
                     <input type="hidden" name="next" value="{{ request.get_full_path }}">
                     {% if professional.pk in favorite_ids %}
@@ -21,6 +21,18 @@
                         <button type="submit" class="text-sm underline">Favoritar</button>
                     {% endif %}
                 </form>
+            {% endif %}
+            {% if request.user.is_authenticated %}
+                <details class="mt-2 text-sm">
+                    <summary class="cursor-pointer text-red-600 underline">Denunciar</summary>
+                    <form method="post" action="{% url 'moderation:report-user' professional.user_id %}" class="mt-2 space-y-2 max-w-sm">
+                        {% csrf_token %}
+                        <input type="hidden" name="next" value="{{ request.get_full_path }}">
+                        <input type="hidden" name="context" value="Perfil de {{ professional }}">
+                        <textarea name="reason" rows="2" maxlength="1000" class="w-full border rounded px-2 py-1" placeholder="Descreva o motivo" required></textarea>
+                        <button type="submit" class="rounded border border-red-300 text-red-600 px-3 py-1.5 text-sm">Enviar denúncia</button>
+                    </form>
+                </details>
             {% endif %}
         </li>
     {% empty %}

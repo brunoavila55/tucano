@@ -23,6 +23,7 @@ urlpatterns = [
     path("chamados/", include("apps.requests.urls")),
     path("conversa/", include("apps.chat.urls")),
     path("avaliacoes/", include("apps.reviews.urls")),
+    path("moderacao/", include("apps.moderation.urls")),
     path("", HomeView.as_view(), name="home"),
 ]
 

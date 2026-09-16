@@ -5,7 +5,11 @@
 {% block content %}
 <div class="flex items-center justify-between mb-6">
     <h1 class="text-xl font-semibold">Meu perfil</h1>
-    <a href="{% url 'notification-preferences' %}" class="text-sm underline">Notificações</a>
+    <div class="flex gap-4">
+        <a href="{% url 'moderation:verification-request' %}" class="text-sm underline">Verificação</a>
+        <a href="{% url 'moderation:my-cases' %}" class="text-sm underline">Meus casos</a>
+        <a href="{% url 'notification-preferences' %}" class="text-sm underline">Notificações</a>
+    </div>
 </div>
 
 <div class="grid gap-4 sm:grid-cols-2">
