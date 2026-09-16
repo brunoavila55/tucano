@@ -4,7 +4,7 @@ from urllib.parse import urlsplit
 
 from django.contrib.auth import get_user_model
 from django.core import mail
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.urls import reverse
 
 from . import notifications
@@ -148,3 +148,37 @@ class PushSubscriptionCreateViewTest(TestCase):
         )
         self.assertEqual(response.status_code, 200)
         self.assertTrue(PushSubscription.objects.filter(user=user, endpoint="https://push.example.com/abc").exists())
+
+
+class PwaTest(TestCase):
+    def test_service_worker_is_served_at_root_scope(self):
+        response = self.client.get("/sw.js")
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response["Content-Type"], "application/javascript")
+        self.assertIn(b"CACHE_NAME", response.content)
+
+    def test_manifest_json_has_standalone_display(self):
+        # Em produção o Caddy serve /static/* direto do volume, sem passar
+        # pelo Django (docker/Caddyfile) — testamos o conteúdo do arquivo,
+        # não uma rodada HTTP pelo Django.
+        from pathlib import Path
+
+        from django.conf import settings
+
+        data = json.loads((Path(settings.BASE_DIR) / "static" / "manifest.json").read_text())
+        self.assertEqual(data["display"], "standalone")
+        self.assertEqual(data["name"], "Tucano")
+        self.assertTrue(data["icons"])
+
+    def test_home_page_registers_service_worker_and_links_manifest(self):
+        response = self.client.get(reverse("home"))
+        self.assertContains(response, 'rel="manifest"')
+        self.assertContains(response, "pwa.js")
+
+    @override_settings(WEBPUSH_VAPID_PUBLIC_KEY="chave-publica-teste")
+    def test_vapid_public_key_reaches_template_context_when_configured(self):
+        User = get_user_model()
+        user = User.objects.create_user(username="pwa1", email="pwa1@example.com", password="senha-forte-123")
+        self.client.force_login(user)
+        response = self.client.get(reverse("profile-hub"))
+        self.assertContains(response, "chave-publica-teste")

@@ -1,13 +1,30 @@
-<!DOCTYPE html>
+{% load static %}<!DOCTYPE html>
 <html lang="pt-br">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Tucano{% endblock %}</title>
+
+    <link rel="manifest" href="{% static 'manifest.json' %}">
+    <meta name="theme-color" content="#111827">
+    <link rel="apple-touch-icon" href="{% static 'icons/icon-192.png' %}">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="Tucano">
+
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/htmx.org@2.0.4"></script>
+    <script src="{% static 'pwa.js' %}" defer></script>
 </head>
 <body class="bg-gray-50 text-gray-900 min-h-screen flex flex-col">
+    <div id="install-banner-android" hidden class="bg-blue-50 text-blue-900 text-sm px-4 py-2 flex items-center justify-between gap-3">
+        <span>Instale o Tucano na tela inicial para acesso rápido.</span>
+        <button type="button" onclick="tucanoInstallApp()" class="underline whitespace-nowrap">Instalar</button>
+    </div>
+    <div id="install-banner-ios" hidden class="bg-blue-50 text-blue-900 text-sm px-4 py-2">
+        Toque em <strong>Compartilhar</strong> e depois em <strong>Adicionar à Tela de Início</strong> para instalar o Tucano.
+    </div>
+
     <header class="bg-white border-b border-gray-200">
         <nav class="max-w-3xl mx-auto flex items-center justify-between px-4 py-3">
             <a href="{% url 'home' %}" class="font-semibold text-lg">Tucano</a>
@@ -34,5 +51,13 @@
         {% endif %}
         {% block content %}{% endblock %}
     </main>
+
+    {% if user.is_authenticated and vapid_public_key %}
+        <script>
+            document.addEventListener("DOMContentLoaded", function () {
+                tucanoSubscribeToPush("{{ vapid_public_key }}");
+            });
+        </script>
+    {% endif %}
 </body>
 </html>
