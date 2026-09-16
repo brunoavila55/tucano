@@ -9,5 +9,6 @@ urlpatterns = [
     path("perfil/", ProfileHubView.as_view(), name="profile-hub"),
     path("profissional/", include("apps.professionals.urls")),
     path("contratante/", include("apps.clients.urls")),
+    path("chamados/", include("apps.requests.urls")),
     path("", HomeView.as_view(), name="home"),
 ]

@@ -1,0 +1,19 @@
+<ul class="space-y-2">
+    {% for interest in interests %}
+        <li class="rounded border border-gray-200 bg-white p-3 text-sm flex items-center justify-between">
+            <div>
+                <p class="font-medium">{{ interest.professional.user }}</p>
+                {% if interest.message %}<p class="text-gray-600">{{ interest.message }}</p>{% endif %}
+                <p class="text-xs text-gray-500">{{ interest.get_status_display }}</p>
+            </div>
+            {% if interest.status == "applied" %}
+                <form method="post" action="{% url 'requests:interest-select' interest.pk %}">
+                    {% csrf_token %}
+                    <button type="submit" class="text-sm underline">Selecionar</button>
+                </form>
+            {% endif %}
+        </li>
+    {% empty %}
+        <li class="text-gray-500 text-sm">Ninguém demonstrou interesse ainda.</li>
+    {% endfor %}
+</ul>

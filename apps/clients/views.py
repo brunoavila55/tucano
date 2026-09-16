@@ -26,3 +26,8 @@ class ClientProfileCreateView(LoginRequiredMixin, CreateView):
 
 class ClientDashboardView(ClientRequiredMixin, TemplateView):
     template_name = "clients/dashboard.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["service_requests"] = self.request.user.client_profile.service_requests.all()[:20]
+        return context

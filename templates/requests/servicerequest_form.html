@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+
+{% block title %}Publicar chamado — Tucano{% endblock %}
+
+{% block content %}
+<h1 class="text-xl font-semibold mb-4">Publicar chamado</h1>
+<form method="post" class="space-y-4 max-w-md">
+    {% csrf_token %}
+    {{ form.non_field_errors }}
+
+    <div>
+        <label class="block text-sm font-medium mb-1" for="{{ form.category.id_for_label }}">Categoria</label>
+        {{ form.category }}
+        {{ form.category.errors }}
+    </div>
+
+    <div>
+        <label class="block text-sm font-medium mb-1" for="{{ form.title.id_for_label }}">Título</label>
+        {{ form.title }}
+        {{ form.title.errors }}
+    </div>
+
+    <div>
+        <label class="block text-sm font-medium mb-1" for="{{ form.description.id_for_label }}">Descrição</label>
+        {{ form.description }}
+        {{ form.description.errors }}
+    </div>
+
+    <div>
+        <label class="block text-sm font-medium mb-1" for="{{ form.positions_count.id_for_label }}">Quantas posições?</label>
+        {{ form.positions_count }}
+        {{ form.positions_count.errors }}
+    </div>
+
+    <div>
+        <label class="block text-sm font-medium mb-1" for="{{ form.scheduled_start.id_for_label }}">Data e horário do serviço</label>
+        {{ form.scheduled_start }}
+        {{ form.scheduled_start.errors }}
+    </div>
+
+    <div>
+        <label class="block text-sm font-medium mb-1" for="{{ form.interest_window.id_for_label }}">Janela de interesse</label>
+        {{ form.interest_window }}
+        {{ form.interest_window.errors }}
+        <p class="text-xs text-gray-500 mt-1">Por quanto tempo o chamado fica aberto para manifestações.</p>
+    </div>
+
+    <div>
+        <label class="block text-sm font-medium mb-1" for="{{ form.location_label.id_for_label }}">Região (ex.: bairro, cidade)</label>
+        {{ form.location_label }}
+        {{ form.location_label.errors }}
+    </div>
+
+    <div>
+        <button type="button" id="use-location" class="text-sm underline">Usar minha localização atual</button>
+        <p id="location-status" class="text-xs text-gray-500 mt-1"></p>
+        {{ form.latitude }}
+        {{ form.longitude }}
+    </div>
+
+    <div>
+        <label class="block text-sm font-medium mb-1" for="{{ form.budget.id_for_label }}">Valor ou faixa sugerida (opcional)</label>
+        {{ form.budget }}
+        {{ form.budget.errors }}
+    </div>
+
+    <div>
+        <label class="block text-sm font-medium mb-1" for="{{ form.requirements.id_for_label }}">Requisitos (opcional)</label>
+        {{ form.requirements }}
+        {{ form.requirements.errors }}
+    </div>
+
+    <button type="submit" class="rounded bg-gray-900 text-white px-4 py-2 text-sm font-medium">Publicar</button>
+</form>
+
+<script>
+    document.getElementById("use-location").addEventListener("click", function () {
+        const status = document.getElementById("location-status");
+        if (!navigator.geolocation) {
+            status.textContent = "Geolocalização não suportada neste navegador.";
+            return;
+        }
+        status.textContent = "Obtendo localização...";
+        navigator.geolocation.getCurrentPosition(
+            function (position) {
+                document.getElementById("id_latitude").value = position.coords.latitude;
+                document.getElementById("id_longitude").value = position.coords.longitude;
+                status.textContent = "Localização obtida.";
+            },
+            function () {
+                status.textContent = "Não foi possível obter sua localização.";
+            }
+        );
+    });
+</script>
+{% endblock %}

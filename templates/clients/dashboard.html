@@ -3,6 +3,21 @@
 {% block title %}Painel do contratante — Tucano{% endblock %}
 
 {% block content %}
-<h1 class="text-xl font-semibold mb-4">Painel do contratante</h1>
-<p class="text-gray-600">{{ request.user.client_profile.company_name|default:"—" }}</p>
+<div class="flex items-center justify-between mb-4">
+    <h1 class="text-xl font-semibold">Painel do contratante</h1>
+    <a href="{% url 'requests:create' %}" class="rounded bg-gray-900 text-white px-3 py-1.5 text-sm font-medium">Publicar chamado</a>
+</div>
+<p class="text-gray-600 mb-6">{{ request.user.client_profile.company_name|default:"—" }}</p>
+
+<h2 class="font-medium mb-2">Meus chamados</h2>
+<ul class="space-y-2">
+    {% for sr in service_requests %}
+        <li class="rounded border border-gray-200 bg-white p-3 text-sm">
+            <a href="{% url 'requests:detail' sr.pk %}" class="font-medium hover:underline">{{ sr.title }}</a>
+            <span class="text-gray-500"> · {{ sr.get_status_display }}</span>
+        </li>
+    {% empty %}
+        <li class="text-gray-500 text-sm">Nenhum chamado publicado ainda.</li>
+    {% endfor %}
+</ul>
 {% endblock %}

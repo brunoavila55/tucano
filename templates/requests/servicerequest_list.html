@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+
+{% block title %}Chamados compatíveis — Tucano{% endblock %}
+
+{% block content %}
+<h1 class="text-xl font-semibold mb-4">Chamados compatíveis com você</h1>
+
+<ul class="space-y-3">
+    {% for sr in service_requests %}
+        <li class="rounded border border-gray-200 bg-white p-4">
+            <a href="{% url 'requests:detail' sr.pk %}" class="font-medium hover:underline">{{ sr.title }}</a>
+            <p class="text-sm text-gray-600">{{ sr.category }} · {{ sr.location_label|default:"Região não informada" }}
+                {% if sr.distance %} · a cerca de {{ sr.distance.km|floatformat:0 }} km{% endif %}
+            </p>
+            <p class="text-sm text-gray-600">Serviço em {{ sr.scheduled_start }} · janela de {{ sr.get_interest_window_display }}</p>
+            {% if sr.pk in applied_ids %}
+                <span class="inline-block mt-1 text-xs rounded bg-gray-100 text-gray-700 px-2 py-0.5">Você já demonstrou interesse</span>
+            {% endif %}
+        </li>
+    {% empty %}
+        <li class="text-gray-500 text-sm">Nenhum chamado compatível no momento.</li>
+    {% endfor %}
+</ul>
+{% endblock %}

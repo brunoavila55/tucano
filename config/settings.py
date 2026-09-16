@@ -97,6 +97,16 @@ CELERY_BROKER_URL = REDIS_URL
 CELERY_RESULT_BACKEND = REDIS_URL
 CELERY_TIMEZONE = "America/Sao_Paulo"
 
+# Expiração automática do chamado (AGENTS.md — "Janela de interesse e
+# seleção"): varredura periódica em vez de agendar uma tarefa por chamado,
+# para sobreviver a restart do worker/beat sem perder o job.
+CELERY_BEAT_SCHEDULE = {
+    "expire-due-service-requests": {
+        "task": "apps.requests.tasks.expire_due_service_requests",
+        "schedule": 30.0,
+    },
+}
+
 AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
     {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator"},
