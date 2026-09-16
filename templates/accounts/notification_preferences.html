@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{% block title %}Notificações — Tucano{% endblock %}
+
+{% block content %}
+<h1 class="text-xl font-semibold mb-4">Notificações</h1>
+<form method="post" class="space-y-4 max-w-sm">
+    {% csrf_token %}
+    <div class="flex items-center gap-2">
+        {{ form.push_enabled }}
+        <label for="{{ form.push_enabled.id_for_label }}" class="text-sm">Notificações push</label>
+    </div>
+    <div class="flex items-center gap-2">
+        {{ form.whatsapp_enabled }}
+        <label for="{{ form.whatsapp_enabled.id_for_label }}" class="text-sm">WhatsApp/SMS (reforço para chamados urgentes)</label>
+    </div>
+    <div class="flex items-center gap-2">
+        {{ form.email_enabled }}
+        <label for="{{ form.email_enabled.id_for_label }}" class="text-sm">E-mail</label>
+    </div>
+    <button type="submit" class="rounded bg-gray-900 text-white px-4 py-2 text-sm font-medium">Salvar</button>
+</form>
+{% endblock %}

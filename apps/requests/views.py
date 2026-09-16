@@ -26,6 +26,7 @@ class ServiceRequestCreateView(ClientRequiredMixin, CreateView):
             form.add_error(None, exc)
             return self.form_invalid(form)
         log_event(self.request.user, "service_request.published", self.object)
+        services.notify_compatible_professionals(self.object)
         return response
 
     def get_success_url(self):

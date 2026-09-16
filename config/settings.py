@@ -4,6 +4,7 @@ Django settings for the tucano project.
 See docs.djangoproject.com/en/5.2/topics/settings/ for the full reference.
 """
 
+import sys
 from pathlib import Path
 
 import environ
@@ -96,6 +97,23 @@ CHANNEL_LAYERS = {
 CELERY_BROKER_URL = REDIS_URL
 CELERY_RESULT_BACKEND = REDIS_URL
 CELERY_TIMEZONE = "America/Sao_Paulo"
+# Ligado só em teste (via conftest.py) para não depender de worker/broker.
+# Roda as tasks Celery em processo durante os testes (sem broker/worker) —
+# detectar pytest é mais confiável aqui do que uma env var, porque o
+# settings module é importado pelo pytest-django antes de qualquer
+# conftest.py rodar.
+CELERY_TASK_ALWAYS_EAGER = "pytest" in sys.modules
+CELERY_TASK_EAGER_PROPAGATES = CELERY_TASK_ALWAYS_EAGER
+
+# Notificações em camadas (AGENTS.md/stack.md §6) — em branco = canal
+# desabilitado, o envio é registrado como "skipped" em vez de falhar.
+WEBPUSH_VAPID_PUBLIC_KEY = env("WEBPUSH_VAPID_PUBLIC_KEY", default="")
+WEBPUSH_VAPID_PRIVATE_KEY = env("WEBPUSH_VAPID_PRIVATE_KEY", default="")
+WEBPUSH_VAPID_ADMIN_EMAIL = env("WEBPUSH_VAPID_ADMIN_EMAIL", default="mailto:admin@example.com")
+
+TWILIO_ACCOUNT_SID = env("TWILIO_ACCOUNT_SID", default="")
+TWILIO_AUTH_TOKEN = env("TWILIO_AUTH_TOKEN", default="")
+TWILIO_WHATSAPP_FROM = env("TWILIO_WHATSAPP_FROM", default="")
 
 # Expiração automática do chamado (AGENTS.md — "Janela de interesse e
 # seleção"): varredura periódica em vez de agendar uma tarefa por chamado,

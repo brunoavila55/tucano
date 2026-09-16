@@ -6,6 +6,7 @@ from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
 
+from apps.accounts.models import NotificationLog
 from apps.clients.models import ClientProfile
 from apps.moderation.models import AuditEvent
 from apps.professionals.models import ProfessionalProfile, ServiceCategory
@@ -91,6 +92,35 @@ class ServiceRequestCreationTest(TestCase):
         self.assertEqual(response.status_code, 302)
         self.assertTrue(ServiceRequest.objects.filter(title="Preciso de DJ").exists())
         self.assertTrue(AuditEvent.objects.filter(event_type="service_request.published").exists())
+
+    def test_publishing_notifies_compatible_professional(self):
+        pro = make_professional("compat", category=self.category)
+        User = get_user_model()
+        owner = User.objects.create_user(username="c3", email="c3@example.com", password="senha-forte-123")
+        ClientProfile.objects.create(user=owner)
+        self.client.force_login(owner)
+
+        self.client.post(
+            reverse("requests:create"),
+            {
+                "category": self.category.pk,
+                "title": "Preciso de garçom urgente",
+                "description": "Hoje à noite",
+                "positions_count": 1,
+                "scheduled_start": (timezone.now() + timedelta(hours=6)).strftime("%Y-%m-%dT%H:%M"),
+                "interest_window": ServiceRequest.InterestWindow.TWO_HOURS,
+                "location_label": "Centro",
+            },
+        )
+        self.assertTrue(
+            NotificationLog.objects.filter(user=pro.user, event_type="service_request.compatible").exists()
+        )
+        # Janela de 2h é urgente: deve tentar também o canal WhatsApp/SMS.
+        self.assertTrue(
+            NotificationLog.objects.filter(
+                user=pro.user, event_type="service_request.compatible", channel="whatsapp"
+            ).exists()
+        )
 
 
 class InterestFlowTest(TestCase):
@@ -199,6 +229,7 @@ class InterestFlowTest(TestCase):
         interest = Interest.objects.create(service_request=self.request, professional=pro)
         services.select_interest(interest, self.client_profile.user)
         self.assertTrue(AuditEvent.objects.filter(event_type="interest.selected").exists())
+        self.assertTrue(NotificationLog.objects.filter(user=pro.user, event_type="interest.selected").exists())
 
 
 class ExpireDueRequestsTest(TestCase):
