@@ -1,0 +1,17 @@
+__pycache__/
+*.pyc
+.venv/
+.python-version-local
+
+.env
+db.sqlite3
+staticfiles/
+media/
+
+.pytest_cache/
+.ruff_cache/
+celerybeat-schedule
+
+.DS_Store
+.idea/
+.vscode/
