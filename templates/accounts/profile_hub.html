@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+
+{% block title %}Meu perfil — Tucano{% endblock %}
+
+{% block content %}
+<h1 class="text-xl font-semibold mb-6">Meu perfil</h1>
+
+<div class="grid gap-4 sm:grid-cols-2">
+    <div class="rounded border border-gray-200 bg-white p-4">
+        <h2 class="font-medium mb-2">Perfil de profissional</h2>
+        {% if has_professional_profile %}
+            <p class="text-sm text-gray-600 mb-3">Você já tem um perfil de profissional.</p>
+            <a href="{% url 'professionals:dashboard' %}" class="text-sm underline">Abrir painel</a>
+        {% else %}
+            <p class="text-sm text-gray-600 mb-3">Ofereça seus serviços e receba oportunidades.</p>
+            <a href="{% url 'professionals:create' %}" class="text-sm underline">Criar perfil de profissional</a>
+        {% endif %}
+    </div>
+
+    <div class="rounded border border-gray-200 bg-white p-4">
+        <h2 class="font-medium mb-2">Perfil de contratante</h2>
+        {% if has_client_profile %}
+            <p class="text-sm text-gray-600 mb-3">Você já tem um perfil de contratante.</p>
+            <a href="{% url 'clients:dashboard' %}" class="text-sm underline">Abrir painel</a>
+        {% else %}
+            <p class="text-sm text-gray-600 mb-3">Publique chamados e encontre profissionais.</p>
+            <a href="{% url 'clients:create' %}" class="text-sm underline">Criar perfil de contratante</a>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+
+{% block title %}Criar perfil de contratante — Tucano{% endblock %}
+
+{% block content %}
+<h1 class="text-xl font-semibold mb-4">Criar perfil de contratante</h1>
+<form method="post" class="space-y-4 max-w-md">
+    {% csrf_token %}
+    {{ form.non_field_errors }}
+    <div>
+        <label class="block text-sm font-medium mb-1" for="{{ form.company_name.id_for_label }}">Nome (ou empresa), se aplicável</label>
+        {{ form.company_name }}
+        {{ form.company_name.errors }}
+    </div>
+    <button type="submit" class="rounded bg-gray-900 text-white px-4 py-2 text-sm font-medium">Salvar</button>
+</form>
+{% endblock %}

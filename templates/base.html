@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Tucano{% endblock %}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/htmx.org@2.0.4"></script>
+</head>
+<body class="bg-gray-50 text-gray-900 min-h-screen flex flex-col">
+    <header class="bg-white border-b border-gray-200">
+        <nav class="max-w-3xl mx-auto flex items-center justify-between px-4 py-3">
+            <a href="{% url 'home' %}" class="font-semibold text-lg">Tucano</a>
+            <div class="flex items-center gap-4 text-sm">
+                {% if user.is_authenticated %}
+                    <a href="{% url 'profile-hub' %}" class="hover:underline">Meu perfil</a>
+                    <a href="{% url 'account_logout' %}" class="hover:underline">Sair</a>
+                {% else %}
+                    <a href="{% url 'account_login' %}" class="hover:underline">Entrar</a>
+                    <a href="{% url 'account_signup' %}" class="hover:underline">Cadastrar</a>
+                {% endif %}
+            </div>
+        </nav>
+    </header>
+
+    <main class="flex-1 max-w-3xl w-full mx-auto px-4 py-6">
+        {% if messages %}
+            <ul class="mb-4 space-y-2">
+                {% for message in messages %}
+                    <li class="rounded bg-blue-50 text-blue-800 px-3 py-2 text-sm">{{ message }}</li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+        {% block content %}{% endblock %}
+    </main>
+</body>
+</html>

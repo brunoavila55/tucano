@@ -1,0 +1,8 @@
+{% extends "base.html" %}
+
+{% block title %}Painel do contratante — Tucano{% endblock %}
+
+{% block content %}
+<h1 class="text-xl font-semibold mb-4">Painel do contratante</h1>
+<p class="text-gray-600">{{ request.user.client_profile.company_name|default:"—" }}</p>
+{% endblock %}

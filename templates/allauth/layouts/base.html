@@ -1,0 +1,30 @@
+{% load i18n %}
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block head_title %}Tucano{% endblock %}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    {% block extra_head %}{% endblock %}
+</head>
+<body class="bg-gray-50 text-gray-900 min-h-screen flex flex-col">
+    <header class="bg-white border-b border-gray-200">
+        <nav class="max-w-3xl mx-auto flex items-center justify-between px-4 py-3">
+            <a href="{% url 'home' %}" class="font-semibold text-lg">Tucano</a>
+        </nav>
+    </header>
+
+    <main class="flex-1 max-w-sm w-full mx-auto px-4 py-8">
+        {% if messages %}
+            <ul class="mb-4 space-y-2">
+                {% for message in messages %}
+                    <li class="rounded bg-blue-50 text-blue-800 px-3 py-2 text-sm">{{ message }}</li>
+                {% endfor %}
+            </ul>
+        {% endif %}
+        {% block content %}{% endblock %}
+    </main>
+    {% block extra_body %}{% endblock %}
+</body>
+</html>
