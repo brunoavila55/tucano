@@ -1,22 +1,34 @@
-<ul class="space-y-2">
-    {% for interest in interests %}
-        <li class="rounded border border-gray-200 bg-white p-3 text-sm flex items-center justify-between">
-            <div>
-                <p class="font-medium">{{ interest.professional.user }}</p>
-                {% if interest.message %}<p class="text-gray-600">{{ interest.message }}</p>{% endif %}
-                <p class="text-xs text-gray-500">{{ interest.get_status_display }}</p>
-            </div>
-            {% if interest.status == "applied" %}
-                <form method="post" action="{% url 'requests:interest-select' interest.pk %}">
-                    {% csrf_token %}
-                    <button type="submit" class="text-sm underline">Selecionar</button>
-                </form>
-            {% elif interest.status == "selected" %}
-                <a href="{% url 'chat:detail' interest.pk %}" class="text-sm underline">Conversar</a>
-                <a href="{% url 'reviews:confirmation-detail' interest.pk %}" class="text-sm underline ml-2">Confirmar/avaliar</a>
-            {% endif %}
-        </li>
-    {% empty %}
-        <li class="text-gray-500 text-sm">Ninguém demonstrou interesse ainda.</li>
-    {% endfor %}
-</ul>
+{% if interests %}
+    <ul class="space-y-2 pulse-on-load">
+        {% for interest in interests %}
+            <li class="card p-3 flex items-center justify-between gap-3">
+                <div class="flex items-start gap-3">
+                    {% include "_includes/avatar.html" with user=interest.professional.user size="md" %}
+                    <div>
+                        <p class="font-semibold text-sm">{{ interest.professional.user }}</p>
+                        {% if interest.message %}<p class="text-sm text-ink-soft mt-0.5">{{ interest.message }}</p>{% endif %}
+                        <div class="mt-1.5">{% include "_includes/status_tag.html" with status=interest.status label=interest.get_status_display %}</div>
+                    </div>
+                </div>
+                <div class="flex items-center gap-3 shrink-0">
+                    {% if interest.status == "applied" %}
+                        <form method="post" action="{% url 'requests:interest-select' interest.pk %}">
+                            {% csrf_token %}
+                            <button type="submit" class="btn btn-primary">
+                                {% include "_includes/icon.html" with name="check" %}
+                                <span class="btn-label">Selecionar</span>
+                            </button>
+                        </form>
+                    {% elif interest.status == "selected" %}
+                        <a href="{% url 'chat:detail' interest.pk %}" class="link text-sm inline-flex items-center gap-1">
+                            {% include "_includes/icon.html" with name="message" %}Conversar
+                        </a>
+                        <a href="{% url 'reviews:confirmation-detail' interest.pk %}" class="link text-sm">Confirmar/avaliar</a>
+                    {% endif %}
+                </div>
+            </li>
+        {% endfor %}
+    </ul>
+{% else %}
+    {% include "_includes/empty_state.html" with icon="users" title="Ninguém demonstrou interesse ainda" text="Assim que alguém compatível se manifestar, aparece aqui na hora." %}
+{% endif %}

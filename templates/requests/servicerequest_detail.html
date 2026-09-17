@@ -3,34 +3,83 @@
 {% block title %}{{ service_request.title }} — Tucano{% endblock %}
 
 {% block content %}
-<h1 class="text-xl font-semibold mb-1">{{ service_request.title }}</h1>
-<p class="text-sm text-gray-600 mb-4">
-    {{ service_request.category }} · {{ service_request.location_label|default:"Região não informada" }} ·
-    status: <strong>{{ service_request.get_status_display }}</strong>
-</p>
+<div class="ticket elevated p-5 mb-6">
+    <div class="flex items-start justify-between gap-3 flex-wrap">
+        <div>
+            <h1 class="text-xl font-extrabold tracking-tight">{{ service_request.title }}</h1>
+            <p class="text-sm text-ink-soft mt-1 inline-flex items-center gap-1.5">
+                {% include "_includes/icon.html" with name="pin" class="icon-sm" %}
+                {{ service_request.category }}{% if service_request.location_label %}, atende {{ service_request.location_label }}{% endif %}
+            </p>
+        </div>
+        <div class="flex flex-col items-end gap-1.5">
+            {% include "_includes/status_tag.html" with status=service_request.status label=service_request.get_status_display %}
+            {% include "_includes/window_tag.html" with window=service_request.interest_window label=service_request.get_interest_window_display %}
+        </div>
+    </div>
 
-<div class="rounded border border-gray-200 bg-white p-4 mb-6 space-y-1 text-sm">
-    <p>{{ service_request.description }}</p>
-    <p><strong>Serviço em:</strong> {{ service_request.scheduled_start }}</p>
-    <p><strong>Posições:</strong> {{ service_request.positions_count }}</p>
-    <p><strong>Janela de interesse:</strong> {{ service_request.get_interest_window_display }} (até {{ service_request.expires_at }})</p>
-    {% if service_request.budget %}<p><strong>Valor sugerido:</strong> R$ {{ service_request.budget }}</p>{% endif %}
-    {% if service_request.requirements %}<p><strong>Requisitos:</strong> {{ service_request.requirements }}</p>{% endif %}
-    {% if service_request.cancel_reason %}<p><strong>Motivo do cancelamento:</strong> {{ service_request.cancel_reason }}</p>{% endif %}
+    <p class="text-sm mt-4">{{ service_request.description }}</p>
+
+    <dl class="text-sm mt-4 grid gap-4 sm:grid-cols-2 ticket-stub sm:pl-4">
+        <div class="flex items-start gap-2">
+            {% include "_includes/icon.html" with name="calendar" class="text-beak-orange mt-0.5" %}
+            <div>
+                <dt class="text-ink-soft">Serviço em</dt>
+                <dd class="font-narrow font-semibold">{{ service_request.scheduled_start }}</dd>
+            </div>
+        </div>
+        <div class="flex items-start gap-2">
+            {% include "_includes/icon.html" with name="users" class="text-beak-orange mt-0.5" %}
+            <div>
+                <dt class="text-ink-soft">Posições</dt>
+                <dd class="font-narrow font-semibold">{{ service_request.positions_count }}</dd>
+            </div>
+        </div>
+        <div class="flex items-start gap-2">
+            {% include "_includes/icon.html" with name="clock" class="text-beak-orange mt-0.5" %}
+            <div>
+                <dt class="text-ink-soft">Aberto até</dt>
+                <dd class="font-narrow font-semibold">{{ service_request.expires_at }}</dd>
+            </div>
+        </div>
+        {% if service_request.budget %}
+            <div class="flex items-start gap-2">
+                <span class="icon text-beak-orange mt-0.5 font-narrow font-bold">R$</span>
+                <div>
+                    <dt class="text-ink-soft">Valor sugerido</dt>
+                    <dd class="font-narrow font-semibold">R$ {{ service_request.budget }}</dd>
+                </div>
+            </div>
+        {% endif %}
+        {% if service_request.requirements %}
+            <div class="sm:col-span-2">
+                <dt class="text-ink-soft">Requisitos</dt>
+                <dd>{{ service_request.requirements }}</dd>
+            </div>
+        {% endif %}
+        {% if service_request.cancel_reason %}
+            <div class="sm:col-span-2">
+                <dt class="text-ink-soft">Motivo do cancelamento</dt>
+                <dd>{{ service_request.cancel_reason }}</dd>
+            </div>
+        {% endif %}
+    </dl>
 </div>
 
 {% if is_owner %}
-    <div class="mb-6 flex gap-3">
-        {% if service_request.status == "open" or service_request.status == "partially_filled" %}
+    {% if service_request.status == "open" or service_request.status == "partially_filled" %}
+        <div class="mb-6 flex items-center gap-5">
             <form method="post" action="{% url 'requests:end' service_request.pk %}">
                 {% csrf_token %}
-                <button type="submit" class="text-sm underline">Encerrar agora</button>
+                <button type="submit" class="link text-sm">Encerrar agora</button>
             </form>
-            <a href="{% url 'requests:cancel' service_request.pk %}" class="text-sm text-red-600 underline">Cancelar chamado</a>
-        {% endif %}
-    </div>
+            <a href="{% url 'requests:cancel' service_request.pk %}" class="link-danger text-sm">Cancelar chamado</a>
+        </div>
+    {% endif %}
 
-    <h2 class="font-medium mb-2">Interessados</h2>
+    <h2 class="font-bold text-ink mb-3 inline-flex items-center gap-2">
+        {% include "_includes/icon.html" with name="users" %}Interessados
+    </h2>
     <div id="interests-list"
          hx-get="{% url 'requests:interests-partial' service_request.pk %}"
          hx-trigger="load, every 5s"
@@ -40,24 +89,34 @@
 {% endif %}
 
 {% if my_interest %}
-    <div class="rounded border border-gray-200 bg-white p-4">
-        <p class="text-sm">Seu interesse: <strong>{{ my_interest.get_status_display }}</strong></p>
-        {% if my_interest.status == "applied" %}
-            <form method="post" action="{% url 'requests:interest-withdraw' my_interest.pk %}" class="mt-2">
-                {% csrf_token %}
-                <button type="submit" class="text-sm underline">Retirar interesse</button>
-            </form>
-        {% elif my_interest.status == "selected" %}
-            <a href="{% url 'chat:detail' my_interest.pk %}" class="text-sm underline">Conversar</a>
-            <a href="{% url 'reviews:confirmation-detail' my_interest.pk %}" class="text-sm underline ml-2">Confirmar/avaliar</a>
-        {% endif %}
+    <div class="card p-4 mt-6">
+        <p class="text-sm text-ink-soft mb-2">Seu interesse</p>
+        <div class="flex items-center justify-between gap-3 flex-wrap">
+            {% include "_includes/status_tag.html" with status=my_interest.status label=my_interest.get_status_display %}
+            <div class="flex items-center gap-4">
+                {% if my_interest.status == "applied" %}
+                    <form method="post" action="{% url 'requests:interest-withdraw' my_interest.pk %}">
+                        {% csrf_token %}
+                        <button type="submit" class="link text-sm">Retirar interesse</button>
+                    </form>
+                {% elif my_interest.status == "selected" %}
+                    <a href="{% url 'chat:detail' my_interest.pk %}" class="btn btn-primary">
+                        {% include "_includes/icon.html" with name="message" %}
+                        <span class="btn-label">Conversar</span>
+                    </a>
+                    <a href="{% url 'reviews:confirmation-detail' my_interest.pk %}" class="link text-sm">Confirmar/avaliar</a>
+                {% endif %}
+            </div>
+        </div>
     </div>
 {% elif interest_form %}
-    <form method="post" action="{% url 'requests:interest-create' service_request.pk %}" class="space-y-3 max-w-sm">
+    <form method="post" action="{% url 'requests:interest-create' service_request.pk %}" class="card p-4 mt-6 space-y-3 max-w-sm">
         {% csrf_token %}
-        <label class="block text-sm font-medium" for="{{ interest_form.message.id_for_label }}">Mensagem (opcional)</label>
+        <label class="field-label" for="{{ interest_form.message.id_for_label }}">Mensagem (opcional)</label>
         {{ interest_form.message }}
-        <button type="submit" class="rounded bg-gray-900 text-white px-4 py-2 text-sm font-medium">Demonstrar interesse</button>
+        <button type="submit" class="btn btn-primary">
+            <span class="btn-label">Demonstrar interesse</span>
+        </button>
     </form>
 {% endif %}
 {% endblock %}

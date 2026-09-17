@@ -1,0 +1,22 @@
+{% comment %}Uso: {% include "_includes/message.html" with message=message %}{% endcomment %}
+{% if message.tags == "error" %}
+    <li class="card border-l-4 border-l-beak-red px-3 py-2.5 text-sm flex items-start gap-2">
+        {% include "_includes/icon.html" with name="alert" class="text-beak-red mt-0.5" %}
+        <span>{{ message }}</span>
+    </li>
+{% elif message.tags == "success" %}
+    <li class="card border-l-4 border-l-canopy px-3 py-2.5 text-sm flex items-start gap-2">
+        {% include "_includes/icon.html" with name="check" class="text-canopy mt-0.5" %}
+        <span>{{ message }}</span>
+    </li>
+{% elif message.tags == "warning" %}
+    <li class="card border-l-4 border-l-beak-yellow px-3 py-2.5 text-sm flex items-start gap-2">
+        {% include "_includes/icon.html" with name="alert" class="mt-0.5" %}
+        <span>{{ message }}</span>
+    </li>
+{% else %}
+    <li class="card border-l-4 border-l-beak-orange px-3 py-2.5 text-sm flex items-start gap-2">
+        {% include "_includes/icon.html" with name="bell" class="text-beak-orange mt-0.5" %}
+        <span>{{ message }}</span>
+    </li>
+{% endif %}

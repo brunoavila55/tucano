@@ -1,0 +1,10 @@
+{% comment %}Uso: {% include "_includes/stars.html" with rating=my_review.rating %}{% endcomment %}
+<span class="stars" aria-label="{{ rating }} de 5 estrelas">
+    {% for i in "12345" %}
+        {% if forloop.counter <= rating %}
+            <svg class="icon icon-sm" aria-hidden="true"><use href="#icon-star-filled"></use></svg>
+        {% else %}
+            <svg class="icon icon-sm text-[#c7c2ac]" aria-hidden="true"><use href="#icon-star"></use></svg>
+        {% endif %}
+    {% endfor %}
+</span>

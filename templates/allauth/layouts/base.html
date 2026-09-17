@@ -6,29 +6,72 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block head_title %}Tucano{% endblock %}</title>
     <link rel="manifest" href="{% static 'manifest.json' %}">
-    <meta name="theme-color" content="#111827">
+    <meta name="theme-color" content="#17231c">
     <link rel="apple-touch-icon" href="{% static 'icons/icon-192.png' %}">
+
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&family=Archivo+Narrow:wght@500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/tucano.css' %}">
+
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        ink: "#17231c",
+                        "ink-soft": "#5b6356",
+                        paper: "#f1efe4",
+                        surface: "#fbfaf4",
+                        line: "#dedacb",
+                        "beak-orange": "#e96a11",
+                        "beak-yellow": "#f2b705",
+                        "beak-red": "#c6371e",
+                        canopy: "#2c6b49",
+                    },
+                    fontFamily: {
+                        sans: ["Archivo", "sans-serif"],
+                        narrow: ['"Archivo Narrow"', "sans-serif"],
+                    },
+                },
+            },
+        };
+    </script>
     <script src="{% static 'pwa.js' %}" defer></script>
     {% block extra_head %}{% endblock %}
 </head>
-<body class="bg-gray-50 text-gray-900 min-h-screen flex flex-col">
-    <header class="bg-white border-b border-gray-200">
-        <nav class="max-w-3xl mx-auto flex items-center justify-between px-4 py-3">
-            <a href="{% url 'home' %}" class="font-semibold text-lg">Tucano</a>
+<body class="bg-paper text-ink min-h-screen flex flex-col font-sans antialiased">
+    {% include "_includes/icon_sprite.html" %}
+    <header class="bg-surface border-b border-line">
+        <nav class="max-w-3xl mx-auto flex items-center px-4 py-3">
+            <a href="{% url 'home' %}" class="flex items-center gap-2">
+                {% include "_includes/logomark.html" %}
+                <span class="wordmark">Tucano</span>
+            </a>
         </nav>
     </header>
 
-    <main class="flex-1 max-w-sm w-full mx-auto px-4 py-8">
+    <main class="flex-1 max-w-sm w-full mx-auto px-4 py-10">
         {% if messages %}
-            <ul class="mb-4 space-y-2">
+            <ul class="mb-5 space-y-2">
                 {% for message in messages %}
-                    <li class="rounded bg-blue-50 text-blue-800 px-3 py-2 text-sm">{{ message }}</li>
+                    {% include "_includes/message.html" with message=message %}
                 {% endfor %}
             </ul>
         {% endif %}
         {% block content %}{% endblock %}
     </main>
     {% block extra_body %}{% endblock %}
+    <script>
+        document.addEventListener("submit", function (event) {
+            const form = event.target;
+            const button = form.querySelector("button[type=submit]");
+            if (!button || button.disabled) return;
+            const spinner = document.createElement("span");
+            spinner.className = "spinner";
+            button.prepend(spinner);
+            button.disabled = true;
+        });
+    </script>
 </body>
 </html>

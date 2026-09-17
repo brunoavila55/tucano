@@ -3,12 +3,16 @@
 {% block title %}Solicitar verificação — Tucano{% endblock %}
 
 {% block content %}
-<h1 class="text-xl font-semibold mb-4">Solicitar verificação de identidade</h1>
-<form method="post" enctype="multipart/form-data" class="space-y-4 max-w-sm">
+<h1 class="text-2xl font-extrabold tracking-tight mb-1 inline-flex items-center gap-2">
+    {% include "_includes/icon.html" with name="shield" %}Solicitar verificação de identidade
+</h1>
+<p class="text-sm text-ink-soft mb-5">Usamos seu documento só para confirmar que você é quem diz ser. O selo de verificação nunca é vendido.</p>
+
+<form method="post" enctype="multipart/form-data" class="card p-5 space-y-4 max-w-sm">
     {% csrf_token %}
     {{ form.non_field_errors }}
     <div>
-        <label class="block text-sm font-medium mb-1" for="{{ form.document.id_for_label }}">Documento</label>
+        <label class="field-label" for="{{ form.document.id_for_label }}">Documento</label>
         {{ form.document }}
         {{ form.document.errors }}
     </div>
@@ -16,6 +20,8 @@
         {{ form.consent }}
         <label class="text-sm" for="{{ form.consent.id_for_label }}">{{ form.consent.label }}</label>
     </div>
-    <button type="submit" class="rounded bg-gray-900 text-white px-4 py-2 text-sm font-medium">Enviar</button>
+    <button type="submit" class="btn btn-primary">
+        <span class="btn-label">Enviar</span>
+    </button>
 </form>
 {% endblock %}

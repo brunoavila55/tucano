@@ -1,0 +1,597 @@
+/*
+ * Sistema de design do Tucano.
+ * A paleta vem do bico do tucano, mas cada cor tem um trabalho a fazer:
+ * mapeia um estado real do produto (urgência, disponibilidade, seleção),
+ * nunca é só decoração.
+ */
+
+:root {
+  --ink: #17231c;
+  --ink-soft: #5b6356;
+  --paper: #f1efe4;
+  --surface: #fbfaf4;
+  --line: #dedacb;
+  --line-strong: #c7c2ac;
+
+  --beak-orange: #e96a11;
+  --beak-orange-soft: #fbe6d2;
+  --beak-yellow: #f2b705;
+  --beak-yellow-soft: #fcefc0;
+  --beak-red: #c6371e;
+  --beak-red-soft: #f6e0da;
+  --canopy: #2c6b49;
+  --canopy-soft: #e2ede4;
+}
+
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+html {
+  background: var(--paper);
+}
+
+body {
+  font-family: "Archivo", sans-serif;
+  font-feature-settings: "tnum" 1;
+}
+
+.font-narrow {
+  font-family: "Archivo Narrow", "Archivo", sans-serif;
+}
+
+::selection {
+  background: var(--beak-yellow-soft);
+  color: var(--ink);
+}
+
+:focus-visible {
+  outline: 2px solid var(--beak-orange);
+  outline-offset: 2px;
+}
+
+/* ---------- Botões ---------- */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  border-radius: 3px;
+  padding: 0.55rem 1.1rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  line-height: 1.1;
+  white-space: nowrap;
+  transition: background-color 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+  cursor: pointer;
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+.btn:disabled:has(.spinner) {
+  opacity: 0.85;
+  cursor: wait;
+}
+
+.btn-primary {
+  background: var(--beak-orange);
+  color: var(--surface);
+  border: 1px solid var(--beak-orange);
+}
+.btn-primary:hover:not(:disabled) {
+  background: #cf5c0d;
+  border-color: #cf5c0d;
+}
+
+.btn-dark {
+  background: var(--ink);
+  color: var(--surface);
+  border: 1px solid var(--ink);
+}
+.btn-dark:hover:not(:disabled) {
+  background: #263528;
+}
+
+.btn-ghost {
+  background: transparent;
+  color: var(--ink);
+  border: 1px solid var(--line-strong);
+}
+.btn-ghost:hover:not(:disabled) {
+  border-color: var(--ink);
+}
+
+.btn-danger {
+  background: transparent;
+  color: var(--beak-red);
+  border: 1px solid var(--beak-red);
+}
+.btn-danger:hover:not(:disabled) {
+  background: var(--beak-red);
+  color: var(--surface);
+}
+
+.btn-danger-solid {
+  background: var(--beak-red);
+  color: var(--surface);
+  border: 1px solid var(--beak-red);
+}
+.btn-danger-solid:hover:not(:disabled) {
+  background: #a92e18;
+}
+
+.link {
+  color: var(--ink);
+  text-decoration: underline;
+  text-decoration-color: var(--line-strong);
+  text-underline-offset: 3px;
+  font-weight: 500;
+}
+.link:hover {
+  text-decoration-color: currentColor;
+}
+
+.link-danger {
+  color: var(--beak-red);
+  text-decoration: underline;
+  text-decoration-color: color-mix(in srgb, var(--beak-red) 40%, transparent);
+  text-underline-offset: 3px;
+  font-weight: 500;
+}
+.link-danger:hover {
+  text-decoration-color: currentColor;
+}
+
+/* ---------- Cartões ---------- */
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+}
+
+.card-accent {
+  border-left: 3px solid var(--line-strong);
+}
+.card-accent-available { border-left-color: var(--beak-yellow); }
+.card-accent-selected { border-left-color: var(--canopy); }
+.card-accent-boosted { border-left-color: var(--beak-orange); }
+
+/* Cartão de chamado: um ticket, não um post. Canto cortado + friso
+   de perfuração no bloco de janela/prazo, como um talão de senha. */
+
+.ticket {
+  position: relative;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  clip-path: polygon(0 0, calc(100% - 18px) 0, 100% 18px, 100% 100%, 0 100%);
+}
+
+.ticket::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 0;
+  height: 0;
+  border-style: solid;
+  border-width: 0 18px 18px 0;
+  border-color: transparent var(--paper) transparent transparent;
+}
+
+.ticket-stub {
+  border-left: 1px dashed var(--line-strong);
+}
+
+/* ---------- Etiquetas de status ---------- */
+
+.tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  border-radius: 2px;
+  padding: 0.15rem 0.5rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1.4;
+  white-space: nowrap;
+}
+
+.tag::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: currentColor;
+  flex: none;
+}
+
+.tag-neutral { background: var(--line); color: var(--ink-soft); }
+.tag-active { background: var(--canopy-soft); color: var(--canopy); }
+.tag-past_due { background: var(--beak-yellow-soft); color: #8a6600; }
+.tag-open { background: var(--beak-orange-soft); color: #a4500c; }
+.tag-partially_filled,
+.tag-shortlisted { background: var(--beak-yellow-soft); color: #8a6600; }
+.tag-filled,
+.tag-selected,
+.tag-completed { background: var(--canopy-soft); color: var(--canopy); }
+.tag-expired,
+.tag-not_selected,
+.tag-withdrawn,
+.tag-draft { background: var(--line); color: var(--ink-soft); }
+.tag-cancelled { background: var(--beak-red-soft); color: var(--beak-red); }
+.tag-applied { background: #fff; color: var(--ink-soft); border: 1px solid var(--line-strong); }
+
+.tag-under_review,
+.tag-appealed,
+.tag-pending { background: var(--beak-yellow-soft); color: #8a6600; }
+.tag-decided,
+.tag-approved { background: var(--canopy-soft); color: var(--canopy); }
+.tag-closed { background: var(--line); color: var(--ink-soft); }
+.tag-rejected { background: var(--beak-red-soft); color: var(--beak-red); }
+
+.tag-available {
+  background: var(--beak-yellow);
+  color: var(--ink);
+}
+.tag-available::before {
+  content: none;
+}
+.tag-icon::before {
+  content: none;
+}
+.tag-boosted {
+  background: var(--beak-orange);
+  color: var(--surface);
+}
+.tag-urgent {
+  background: var(--beak-red-soft);
+  color: var(--beak-red);
+}
+
+/* ---------- Formulários ---------- */
+
+.field-label {
+  display: block;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--ink);
+  margin-bottom: 0.3rem;
+}
+
+.field-hint {
+  font-size: 0.75rem;
+  color: var(--ink-soft);
+  margin-top: 0.3rem;
+}
+
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="number"],
+input[type="tel"],
+input[type="url"],
+input[type="date"],
+input[type="time"],
+input[type="datetime-local"],
+input[type="file"],
+select,
+textarea {
+  width: 100%;
+  background: var(--surface);
+  border: 1px solid var(--line-strong);
+  border-radius: 3px;
+  padding: 0.55rem 0.7rem;
+  font-size: 0.9rem;
+  font-family: inherit;
+  color: var(--ink);
+}
+
+textarea {
+  min-height: 5.5rem;
+  resize: vertical;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  outline: 2px solid var(--beak-orange);
+  outline-offset: 1px;
+  border-color: var(--beak-orange);
+}
+
+input[aria-invalid="true"],
+select[aria-invalid="true"],
+textarea[aria-invalid="true"] {
+  border-color: var(--beak-red);
+}
+input[aria-invalid="true"]:focus,
+select[aria-invalid="true"]:focus,
+textarea[aria-invalid="true"]:focus {
+  outline-color: var(--beak-red);
+  border-color: var(--beak-red);
+}
+
+input[type="checkbox"],
+input[type="radio"] {
+  accent-color: var(--beak-orange);
+  width: 1.05rem;
+  height: 1.05rem;
+}
+
+input[type="file"] {
+  padding: 0.4rem;
+  font-size: 0.825rem;
+}
+
+/* ---------- Marca ---------- */
+
+.wordmark {
+  font-weight: 800;
+  font-size: 1.15rem;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+}
+
+.logomark {
+  flex: none;
+  display: block;
+}
+
+/* ---------- Diversos ---------- */
+
+.eyebrow-free {
+  /* nada aqui: propositalmente não usamos rótulos em caixa alta acima de títulos */
+}
+
+.divider {
+  border-top: 1px solid var(--line);
+}
+
+/* Formulários renderizados por bibliotecas de terceiros (allauth `as_p`)
+   sem classes explícitas: aplicamos o mesmo ritmo do resto do app. */
+
+main form p {
+  margin-bottom: 1rem;
+}
+main form p label {
+  display: block;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--ink);
+  margin-bottom: 0.3rem;
+}
+main form p label:has(+ input[type="checkbox"]),
+main form p label:has(+ input[type="radio"]) {
+  display: inline;
+  font-weight: 500;
+  margin-left: 0.4rem;
+}
+main table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+main table th,
+main table td {
+  border-bottom: 1px solid var(--line);
+  padding: 0.5rem 0.25rem;
+  text-align: left;
+}
+.errorlist {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 0.4rem;
+  color: var(--beak-red);
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+.errorlist li {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.35rem;
+}
+.errorlist li::before {
+  content: "!";
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.05rem;
+  height: 1.05rem;
+  border-radius: 999px;
+  background: var(--beak-red-soft);
+  color: var(--beak-red);
+  font-size: 0.7rem;
+  flex: none;
+  margin-top: 0.05rem;
+}
+
+main ul:not([class]) {
+  list-style: disc;
+  padding-left: 1.25rem;
+  font-size: 0.875rem;
+  color: var(--ink-soft);
+}
+
+/* ---------- Ícones ---------- */
+
+.icon {
+  width: 1.1em;
+  height: 1.1em;
+  flex: none;
+  vertical-align: -0.15em;
+}
+.icon-sm { width: 0.95em; height: 0.95em; }
+.icon-lg { width: 2.25rem; height: 2.25rem; }
+
+.btn .icon,
+.link .icon {
+  margin-right: 0.05em;
+}
+
+/* ---------- Avatares ---------- */
+
+.avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  border-radius: 999px;
+  background: var(--beak-orange-soft);
+  color: #a4500c;
+  font-weight: 700;
+  font-family: "Archivo", sans-serif;
+  line-height: 1;
+}
+.stars {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.1rem;
+  color: var(--beak-yellow);
+}
+
+.avatar-sm { width: 1.75rem; height: 1.75rem; font-size: 0.7rem; }
+.avatar-md { width: 2.25rem; height: 2.25rem; font-size: 0.85rem; }
+.avatar-lg { width: 3rem; height: 3rem; font-size: 1.1rem; }
+
+/* ---------- Elevação ---------- */
+
+/* Reservada para superfícies que realmente flutuam sobre o resto
+   (nunca em todos os cards — isso viraria decoração vazia). */
+.elevated {
+  box-shadow: 0 8px 20px -8px rgba(23, 35, 28, 0.28);
+}
+
+/* ---------- Estado vazio ---------- */
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: 2.5rem 1.5rem;
+  color: var(--ink-soft);
+}
+.empty-state .icon-lg {
+  color: var(--line-strong);
+  margin-bottom: 0.75rem;
+}
+.empty-state-title {
+  font-weight: 700;
+  color: var(--ink);
+  font-size: 0.95rem;
+}
+.empty-state-text {
+  font-size: 0.85rem;
+  margin-top: 0.25rem;
+  max-width: 26rem;
+}
+
+/* ---------- Cartões de estatística ---------- */
+
+.stat-card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  padding: 0.9rem 1rem;
+}
+.stat-card-value {
+  font-family: "Archivo Narrow", "Archivo", sans-serif;
+  font-weight: 700;
+  font-size: 1.6rem;
+  line-height: 1.1;
+  color: var(--ink);
+}
+.stat-card-label {
+  font-size: 0.78rem;
+  color: var(--ink-soft);
+  margin-top: 0.2rem;
+}
+
+/* ---------- Seções de formulário ---------- */
+
+.form-section + .form-section {
+  margin-top: 1.75rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--line);
+}
+.form-section-title {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-weight: 700;
+  color: var(--ink);
+  font-size: 0.95rem;
+  margin-bottom: 0.2rem;
+}
+.form-section-title .icon {
+  color: var(--beak-orange);
+}
+.form-section-hint {
+  font-size: 0.8rem;
+  color: var(--ink-soft);
+  margin-bottom: 1rem;
+}
+
+/* ---------- Carregamento (HTMX + submits) ---------- */
+
+.spinner {
+  display: inline-block;
+  width: 1em;
+  height: 1em;
+  border: 2px solid currentColor;
+  border-right-color: transparent;
+  border-radius: 999px;
+  animation: tucano-spin 0.65s linear infinite;
+  flex: none;
+}
+
+@keyframes tucano-spin {
+  to { transform: rotate(360deg); }
+}
+
+.htmx-indicator {
+  display: none;
+}
+.htmx-request .htmx-indicator,
+.htmx-request.htmx-indicator {
+  display: inline-flex;
+}
+.htmx-request .btn-label {
+  opacity: 0.6;
+}
+
+button[data-loading-text]:disabled {
+  opacity: 0.75;
+  cursor: wait;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spinner {
+    animation-duration: 1.6s;
+  }
+}
+
+/* ---------- Notch de atualização (interessados via polling) ---------- */
+
+.pulse-on-load {
+  animation: tucano-fade-in 0.35s ease-out;
+}
+@keyframes tucano-fade-in {
+  from { opacity: 0.4; }
+  to { opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .pulse-on-load { animation: none; }
+}
+
+.skip-link:not(:focus) {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+}

@@ -1,0 +1,8 @@
+{% comment %}
+Uso: {% include "_includes/window_tag.html" with window=service_request.interest_window label=service_request.get_interest_window_display %}
+{% endcomment %}
+{% if window == "2h" or window == "5h" %}
+    <span class="tag tag-urgent">Janela de {{ label }}</span>
+{% else %}
+    <span class="tag tag-neutral">Janela de {{ label }}</span>
+{% endif %}

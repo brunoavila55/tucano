@@ -1,0 +1,4 @@
+{% comment %}
+Uso: {% include "_includes/status_tag.html" with status=service_request.status label=service_request.get_status_display %}
+{% endcomment %}
+<span class="tag tag-{{ status }}">{{ label }}</span>

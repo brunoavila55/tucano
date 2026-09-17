@@ -3,15 +3,19 @@
 {% block title %}Criar perfil de contratante — Tucano{% endblock %}
 
 {% block content %}
-<h1 class="text-xl font-semibold mb-4">Criar perfil de contratante</h1>
-<form method="post" class="space-y-4 max-w-md">
+<h1 class="text-2xl font-extrabold tracking-tight mb-5 inline-flex items-center gap-2">
+    {% include "_includes/icon.html" with name="building" %}Criar perfil de contratante
+</h1>
+<form method="post" class="card p-5 space-y-4 max-w-md">
     {% csrf_token %}
     {{ form.non_field_errors }}
     <div>
-        <label class="block text-sm font-medium mb-1" for="{{ form.company_name.id_for_label }}">Nome (ou empresa), se aplicável</label>
+        <label class="field-label" for="{{ form.company_name.id_for_label }}">Nome (ou empresa), se aplicável</label>
         {{ form.company_name }}
         {{ form.company_name.errors }}
     </div>
-    <button type="submit" class="rounded bg-gray-900 text-white px-4 py-2 text-sm font-medium">Salvar</button>
+    <button type="submit" class="btn btn-primary">
+        <span class="btn-label">Salvar</span>
+    </button>
 </form>
 {% endblock %}

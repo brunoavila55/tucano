@@ -6,51 +6,99 @@
     <title>{% block title %}Tucano{% endblock %}</title>
 
     <link rel="manifest" href="{% static 'manifest.json' %}">
-    <meta name="theme-color" content="#111827">
+    <meta name="theme-color" content="#17231c">
     <link rel="apple-touch-icon" href="{% static 'icons/icon-192.png' %}">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="Tucano">
 
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Archivo:wght@400;500;600;700;800;900&family=Archivo+Narrow:wght@500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{% static 'css/tucano.css' %}">
+
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        ink: "#17231c",
+                        "ink-soft": "#5b6356",
+                        paper: "#f1efe4",
+                        surface: "#fbfaf4",
+                        line: "#dedacb",
+                        "beak-orange": "#e96a11",
+                        "beak-yellow": "#f2b705",
+                        "beak-red": "#c6371e",
+                        canopy: "#2c6b49",
+                    },
+                    fontFamily: {
+                        sans: ["Archivo", "sans-serif"],
+                        narrow: ['"Archivo Narrow"', "sans-serif"],
+                    },
+                    borderRadius: {
+                        DEFAULT: "3px",
+                    },
+                },
+            },
+        };
+    </script>
     <script src="https://unpkg.com/htmx.org@2.0.4"></script>
     <script src="{% static 'pwa.js' %}" defer></script>
 </head>
-<body class="bg-gray-50 text-gray-900 min-h-screen flex flex-col">
-    <div id="install-banner-android" hidden class="bg-blue-50 text-blue-900 text-sm px-4 py-2 flex items-center justify-between gap-3">
+<body class="bg-paper text-ink min-h-screen flex flex-col font-sans antialiased">
+    <a href="#main" class="skip-link">Pular para o conteúdo</a>
+    {% include "_includes/icon_sprite.html" %}
+
+    <div id="install-banner-android" hidden class="bg-ink text-surface text-sm px-4 py-2 flex items-center justify-between gap-3">
         <span>Instale o Tucano na tela inicial para acesso rápido.</span>
-        <button type="button" onclick="tucanoInstallApp()" class="underline whitespace-nowrap">Instalar</button>
+        <button type="button" onclick="tucanoInstallApp()" class="underline whitespace-nowrap font-medium">Instalar</button>
     </div>
-    <div id="install-banner-ios" hidden class="bg-blue-50 text-blue-900 text-sm px-4 py-2">
+    <div id="install-banner-ios" hidden class="bg-ink text-surface text-sm px-4 py-2">
         Toque em <strong>Compartilhar</strong> e depois em <strong>Adicionar à Tela de Início</strong> para instalar o Tucano.
     </div>
 
-    <header class="bg-white border-b border-gray-200">
-        <nav class="max-w-3xl mx-auto flex items-center justify-between px-4 py-3">
-            <a href="{% url 'home' %}" class="font-semibold text-lg">Tucano</a>
-            <div class="flex items-center gap-4 text-sm">
-                <a href="{% url 'professionals:search' %}" class="hover:underline">Buscar profissionais</a>
+    <header class="bg-surface border-b border-line sticky top-0 z-10">
+        <nav class="max-w-3xl mx-auto flex items-center justify-between px-4 py-3 gap-3">
+            <a href="{% url 'home' %}" class="flex items-center gap-2 shrink-0">
+                {% include "_includes/logomark.html" %}
+                <span class="wordmark">Tucano</span>
+            </a>
+            <div class="flex items-center gap-2 sm:gap-4 text-sm">
+                <a href="{% url 'professionals:search' %}" class="link whitespace-nowrap inline-flex items-center gap-1.5">
+                    {% include "_includes/icon.html" with name="search" %}
+                    <span class="hidden sm:inline">Buscar profissionais</span>
+                </a>
                 {% if user.is_authenticated %}
-                    <a href="{% url 'profile-hub' %}" class="hover:underline">Meu perfil</a>
-                    <a href="{% url 'account_logout' %}" class="hover:underline">Sair</a>
+                    <a href="{% url 'profile-hub' %}" class="link whitespace-nowrap inline-flex items-center gap-1.5">
+                        {% include "_includes/avatar.html" with user=user size="sm" %}
+                        <span class="hidden sm:inline">Meu perfil</span>
+                    </a>
+                    <a href="{% url 'account_logout' %}" class="link whitespace-nowrap">Sair</a>
                 {% else %}
-                    <a href="{% url 'account_login' %}" class="hover:underline">Entrar</a>
-                    <a href="{% url 'account_signup' %}" class="hover:underline">Cadastrar</a>
+                    <a href="{% url 'account_login' %}" class="link whitespace-nowrap">Entrar</a>
+                    <a href="{% url 'account_signup' %}" class="btn btn-primary whitespace-nowrap">Cadastrar</a>
                 {% endif %}
             </div>
         </nav>
     </header>
 
-    <main class="flex-1 max-w-3xl w-full mx-auto px-4 py-6">
+    <main id="main" class="flex-1 max-w-3xl w-full mx-auto px-4 py-6">
         {% if messages %}
-            <ul class="mb-4 space-y-2">
+            <ul class="mb-5 space-y-2">
                 {% for message in messages %}
-                    <li class="rounded bg-blue-50 text-blue-800 px-3 py-2 text-sm">{{ message }}</li>
+                    {% include "_includes/message.html" with message=message %}
                 {% endfor %}
             </ul>
         {% endif %}
         {% block content %}{% endblock %}
     </main>
+
+    <footer class="border-t border-line">
+        <div class="max-w-3xl mx-auto px-4 py-5 text-xs text-ink-soft">
+            Tucano aproxima quem precisa de um serviço de quem presta. O valor combinado entre as partes nunca passa pela plataforma.
+        </div>
+    </footer>
 
     {% if user.is_authenticated and vapid_public_key %}
         <script>
@@ -59,5 +107,21 @@
             });
         </script>
     {% endif %}
+
+    <script>
+        // Feedback de carregamento: ao enviar um formulário comum (não HTMX),
+        // trava o botão e mostra um indicador — evita duplo clique e a
+        // sensação de "não fez nada" enquanto a página troca.
+        document.addEventListener("submit", function (event) {
+            const form = event.target;
+            if (form.hasAttribute("hx-post") || form.hasAttribute("hx-get")) return;
+            const button = form.querySelector("button[type=submit]");
+            if (!button || button.disabled) return;
+            const spinner = document.createElement("span");
+            spinner.className = "spinner";
+            button.prepend(spinner);
+            button.disabled = true;
+        });
+    </script>
 </body>
 </html>

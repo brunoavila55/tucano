@@ -3,10 +3,13 @@
 {% block title %}Excluir disponibilidade — Tucano{% endblock %}
 
 {% block content %}
-<h1 class="text-xl font-semibold mb-4">Excluir "{{ object }}"?</h1>
-<form method="post">
+<h1 class="text-xl font-extrabold tracking-tight mb-4">Excluir "{{ object }}"?</h1>
+<form method="post" class="flex items-center gap-4">
     {% csrf_token %}
-    <button type="submit" class="rounded bg-red-600 text-white px-4 py-2 text-sm font-medium">Confirmar exclusão</button>
-    <a href="{% url 'professionals:dashboard' %}" class="ml-3 text-sm underline">Cancelar</a>
+    <button type="submit" class="btn btn-danger-solid">
+        {% include "_includes/icon.html" with name="trash" %}
+        <span class="btn-label">Confirmar exclusão</span>
+    </button>
+    <a href="{% url 'professionals:dashboard' %}" class="link text-sm">Cancelar</a>
 </form>
 {% endblock %}

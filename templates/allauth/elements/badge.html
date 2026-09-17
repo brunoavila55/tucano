@@ -1,0 +1,10 @@
+{% load allauth %}
+{% if "danger" in attrs.tags %}
+    <span class="tag tag-cancelled" {% if attrs.title %}title="{{ attrs.title }}"{% endif %}>{% slot %}{% endslot %}</span>
+{% elif "warning" in attrs.tags %}
+    <span class="tag tag-partially_filled" {% if attrs.title %}title="{{ attrs.title }}"{% endif %}>{% slot %}{% endslot %}</span>
+{% elif "success" in attrs.tags %}
+    <span class="tag tag-filled" {% if attrs.title %}title="{{ attrs.title }}"{% endif %}>{% slot %}{% endslot %}</span>
+{% else %}
+    <span class="tag tag-neutral" {% if attrs.title %}title="{{ attrs.title }}"{% endif %}>{% slot %}{% endslot %}</span>
+{% endif %}

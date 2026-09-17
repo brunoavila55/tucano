@@ -3,16 +3,22 @@
 {% block title %}Cancelar chamado — Tucano{% endblock %}
 
 {% block content %}
-<h1 class="text-xl font-semibold mb-4">Cancelar "{{ service_request.title }}"</h1>
-<form method="post" class="space-y-4 max-w-md">
+<h1 class="text-xl font-extrabold tracking-tight mb-4 inline-flex items-center gap-2">
+    {% include "_includes/icon.html" with name="alert" class="text-beak-red" %}Cancelar "{{ service_request.title }}"
+</h1>
+<form method="post" class="card p-5 space-y-4 max-w-md">
     {% csrf_token %}
     {{ form.non_field_errors }}
     <div>
-        <label class="block text-sm font-medium mb-1" for="{{ form.reason.id_for_label }}">{{ form.reason.label }}</label>
+        <label class="field-label" for="{{ form.reason.id_for_label }}">{{ form.reason.label }}</label>
         {{ form.reason }}
         {{ form.reason.errors }}
     </div>
-    <button type="submit" class="rounded bg-red-600 text-white px-4 py-2 text-sm font-medium">Confirmar cancelamento</button>
-    <a href="{% url 'requests:detail' service_request.pk %}" class="ml-3 text-sm underline">Voltar</a>
+    <div class="flex items-center gap-4">
+        <button type="submit" class="btn btn-danger-solid">
+            <span class="btn-label">Confirmar cancelamento</span>
+        </button>
+        <a href="{% url 'requests:detail' service_request.pk %}" class="link text-sm">Voltar</a>
+    </div>
 </form>
 {% endblock %}

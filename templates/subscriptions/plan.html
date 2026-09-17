@@ -3,33 +3,54 @@
 {% block title %}Assinatura — Tucano{% endblock %}
 
 {% block content %}
-<h1 class="text-xl font-semibold mb-4">Assinatura</h1>
+<h1 class="text-2xl font-extrabold tracking-tight mb-5">Assinatura</h1>
 
-<div class="rounded border border-gray-200 bg-white p-4 mb-6 text-sm space-y-2">
-    <p><strong>Plano atual:</strong> {{ subscription.get_plan_display }}</p>
-    <p><strong>Status:</strong> {{ subscription.get_status_display }}</p>
+<div class="card p-5 mb-6">
+    <div class="flex items-center justify-between mb-4">
+        <div>
+            <p class="text-sm text-ink-soft">Plano atual</p>
+            <p class="font-bold text-ink text-lg">{{ subscription.get_plan_display }}</p>
+        </div>
+        {% include "_includes/status_tag.html" with status=subscription.status label=subscription.get_status_display %}
+    </div>
 
     {% if subscription.is_premium %}
         <form method="post" action="{% url 'subscriptions:cancel' %}">
             {% csrf_token %}
-            <button type="submit" class="rounded border border-red-300 text-red-600 px-4 py-2 text-sm">Cancelar assinatura</button>
+            <button type="submit" class="btn btn-danger">
+                <span class="btn-label">Cancelar assinatura</span>
+            </button>
         </form>
     {% else %}
         {% if mercadopago_configured %}
             <form method="post" action="{% url 'subscriptions:subscribe' %}">
                 {% csrf_token %}
-                <button type="submit" class="rounded bg-gray-900 text-white px-4 py-2 text-sm font-medium">Assinar Premium</button>
+                <button type="submit" class="btn btn-primary">
+                    {% include "_includes/icon.html" with name="bolt" %}
+                    <span class="btn-label">Assinar Premium</span>
+                </button>
             </form>
         {% else %}
-            <p class="text-gray-500">Assinatura Premium indisponível no momento.</p>
+            <p class="text-sm text-ink-soft">Assinatura Premium indisponível no momento.</p>
         {% endif %}
     {% endif %}
 </div>
 
 {% if request.user.professional_profile and subscription.is_premium %}
-    <form method="post" action="{% url 'subscriptions:boost-activate' %}">
-        {% csrf_token %}
-        <button type="submit" class="rounded border border-gray-300 px-4 py-2 text-sm">Ativar destaque por 7 dias</button>
-    </form>
+    <div class="card p-5">
+        <div class="flex items-center gap-2 mb-2">
+            <span class="tag tag-boosted">Destaque</span>
+            <p class="font-bold text-ink">Impulsionar meu perfil por 7 dias</p>
+        </div>
+        <p class="text-sm text-ink-soft mb-4">
+            O destaque aumenta sua exposição entre resultados já compatíveis com a busca — ele nunca coloca seu perfil à frente de quem não atende a categoria ou região buscada, e aparece sempre identificado como patrocinado.
+        </p>
+        <form method="post" action="{% url 'subscriptions:boost-activate' %}">
+            {% csrf_token %}
+            <button type="submit" class="btn btn-ghost">
+                <span class="btn-label">Ativar destaque</span>
+            </button>
+        </form>
+    </div>
 {% endif %}
 {% endblock %}

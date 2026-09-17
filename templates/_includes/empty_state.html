@@ -1,0 +1,10 @@
+{% comment %}
+Uso: {% include "_includes/empty_state.html" with icon="inbox" title="Nada por aqui ainda" text="Descrição curta." %}
+Opcional: cta_url, cta_label
+{% endcomment %}
+<div class="empty-state">
+    {% include "_includes/icon.html" with name=icon|default:"inbox" class="icon-lg" %}
+    <p class="empty-state-title">{{ title }}</p>
+    {% if text %}<p class="empty-state-text">{{ text }}</p>{% endif %}
+    {% if cta_url %}<a href="{{ cta_url }}" class="btn btn-primary mt-3">{{ cta_label }}</a>{% endif %}
+</div>

@@ -3,19 +3,23 @@
 {% block title %}Adicionar foto ao portfólio — Tucano{% endblock %}
 
 {% block content %}
-<h1 class="text-xl font-semibold mb-4">Adicionar foto ao portfólio</h1>
-<form method="post" enctype="multipart/form-data" class="space-y-4 max-w-sm">
+<h1 class="text-2xl font-extrabold tracking-tight mb-5 inline-flex items-center gap-2">
+    {% include "_includes/icon.html" with name="camera" %}Adicionar foto ao portfólio
+</h1>
+<form method="post" enctype="multipart/form-data" class="card p-5 space-y-4 max-w-sm">
     {% csrf_token %}
     {{ form.non_field_errors }}
     <div>
-        <label class="block text-sm font-medium mb-1" for="{{ form.image.id_for_label }}">Foto</label>
+        <label class="field-label" for="{{ form.image.id_for_label }}">Foto</label>
         {{ form.image }}
         {{ form.image.errors }}
     </div>
     <div>
-        <label class="block text-sm font-medium mb-1" for="{{ form.caption.id_for_label }}">Legenda (opcional)</label>
+        <label class="field-label" for="{{ form.caption.id_for_label }}">Legenda (opcional)</label>
         {{ form.caption }}
     </div>
-    <button type="submit" class="rounded bg-gray-900 text-white px-4 py-2 text-sm font-medium">Salvar</button>
+    <button type="submit" class="btn btn-primary">
+        <span class="btn-label">Salvar</span>
+    </button>
 </form>
 {% endblock %}

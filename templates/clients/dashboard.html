@@ -3,24 +3,55 @@
 {% block title %}Painel do contratante — Tucano{% endblock %}
 
 {% block content %}
-<div class="flex items-center justify-between mb-4">
-    <h1 class="text-xl font-semibold">Painel do contratante</h1>
+<div class="flex items-start justify-between mb-1 gap-4 flex-wrap">
+    <div class="flex items-center gap-3">
+        {% include "_includes/avatar.html" with user=request.user size="lg" %}
+        <div>
+            <h1 class="text-2xl font-extrabold tracking-tight leading-tight">Painel do contratante</h1>
+            <p class="text-ink-soft text-sm">{{ request.user.client_profile.company_name|default:"—" }}</p>
+        </div>
+    </div>
     <div class="flex gap-4 items-center">
-        <a href="{% url 'clients:favorites' %}" class="text-sm underline">Favoritos</a>
-        <a href="{% url 'requests:create' %}" class="rounded bg-gray-900 text-white px-3 py-1.5 text-sm font-medium">Publicar chamado</a>
+        <a href="{% url 'clients:favorites' %}" class="link text-sm inline-flex items-center gap-1.5">
+            {% include "_includes/icon.html" with name="heart" %}Favoritos
+        </a>
+        <a href="{% url 'requests:create' %}" class="btn btn-primary">
+            {% include "_includes/icon.html" with name="plus" %}
+            <span class="btn-label">Publicar chamado</span>
+        </a>
     </div>
 </div>
-<p class="text-gray-600 mb-6">{{ request.user.client_profile.company_name|default:"—" }}</p>
 
-<h2 class="font-medium mb-2">Meus chamados</h2>
-<ul class="space-y-2">
-    {% for sr in service_requests %}
-        <li class="rounded border border-gray-200 bg-white p-3 text-sm">
-            <a href="{% url 'requests:detail' sr.pk %}" class="font-medium hover:underline">{{ sr.title }}</a>
-            <span class="text-gray-500"> · {{ sr.get_status_display }}</span>
-        </li>
-    {% empty %}
-        <li class="text-gray-500 text-sm">Nenhum chamado publicado ainda.</li>
-    {% endfor %}
-</ul>
+{% regroup service_requests|dictsort:"status" by status as status_groups %}
+{% if service_requests %}
+    <div class="grid grid-cols-3 gap-3 my-6">
+        <div class="stat-card">
+            <p class="stat-card-value">{{ service_requests|length }}</p>
+            <p class="stat-card-label">Chamados no total</p>
+        </div>
+        {% for group in status_groups %}
+            {% if group.grouper == "open" or group.grouper == "partially_filled" %}
+                <div class="stat-card">
+                    <p class="stat-card-value">{{ group.list|length }}</p>
+                    <p class="stat-card-label">{{ group.list.0.get_status_display }}</p>
+                </div>
+            {% endif %}
+        {% endfor %}
+    </div>
+{% endif %}
+
+<h2 class="font-bold text-ink mb-3">Meus chamados</h2>
+{% if service_requests %}
+    <ul class="space-y-2">
+        {% for sr in service_requests %}
+            <li class="card px-4 py-3 flex items-center justify-between gap-3">
+                <a href="{% url 'requests:detail' sr.pk %}" class="font-semibold text-sm hover:underline">{{ sr.title }}</a>
+                {% include "_includes/status_tag.html" with status=sr.status label=sr.get_status_display %}
+            </li>
+        {% endfor %}
+    </ul>
+{% else %}
+    {% url 'requests:create' as create_url %}
+    {% include "_includes/empty_state.html" with icon="inbox" title="Nenhum chamado publicado ainda" text="Publique o que você precisa e veja quem está disponível perto de você." cta_url=create_url cta_label="Publicar chamado" %}
+{% endif %}
 {% endblock %}

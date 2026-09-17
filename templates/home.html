@@ -3,13 +3,62 @@
 {% block title %}Tucano — Profissionais disponíveis quando você precisa{% endblock %}
 
 {% block content %}
-<section class="text-center py-12">
-    <h1 class="text-3xl font-bold mb-4">Profissionais disponíveis quando você precisa.</h1>
-    <p class="text-gray-600 mb-8">Encontre e contate profissionais autônomos para o serviço que você precisa, onde estiver.</p>
-    {% if not user.is_authenticated %}
-        <a href="{% url 'account_signup' %}" class="inline-block rounded bg-gray-900 text-white px-6 py-3 font-medium">Começar</a>
-    {% else %}
-        <a href="{% url 'profile-hub' %}" class="inline-block rounded bg-gray-900 text-white px-6 py-3 font-medium">Ir para meu perfil</a>
-    {% endif %}
+<section class="py-8 sm:py-12">
+    <h1 class="text-3xl sm:text-4xl font-extrabold tracking-tight max-w-lg leading-tight">
+        Profissionais disponíveis quando você precisa.
+    </h1>
+    <p class="text-ink-soft mt-4 max-w-md text-[0.95rem] leading-relaxed">
+        Publique o que precisa, veja quem está disponível perto de você e converse direto com a pessoa certa. Sem intermediário no pagamento, sem burocracia.
+    </p>
+    <div class="flex flex-wrap items-center gap-3 mt-6">
+        {% if not user.is_authenticated %}
+            <a href="{% url 'account_signup' %}" class="btn btn-primary">Criar minha conta</a>
+            <a href="{% url 'professionals:search' %}" class="link text-sm">Ver profissionais disponíveis</a>
+        {% else %}
+            <a href="{% url 'profile-hub' %}" class="btn btn-primary">Ir para meu perfil</a>
+        {% endif %}
+    </div>
+</section>
+
+<section class="py-6 border-t border-line">
+    <h2 class="text-sm font-bold text-ink mb-4">Chamados como estes</h2>
+    <div class="grid gap-3 sm:grid-cols-3">
+        <div class="ticket p-4">
+            <p class="font-semibold text-sm">Barista para sábado</p>
+            <p class="text-ink-soft text-sm mt-1 inline-flex items-center gap-1.5">{% include "_includes/icon.html" with name="pin" class="icon-sm" %}Cafeteria, Zona Sul</p>
+            <div class="mt-3"><span class="tag tag-urgent">Janela de 5 horas</span></div>
+        </div>
+        <div class="ticket p-4">
+            <p class="font-semibold text-sm">Garçons para evento hoje</p>
+            <p class="text-ink-soft text-sm mt-1 inline-flex items-center gap-1.5">{% include "_includes/icon.html" with name="pin" class="icon-sm" %}Eventos, Centro</p>
+            <div class="mt-3"><span class="tag tag-urgent">Janela de 2 horas</span></div>
+        </div>
+        <div class="ticket p-4">
+            <p class="font-semibold text-sm">Fotógrafo para casamento</p>
+            <p class="text-ink-soft text-sm mt-1 inline-flex items-center gap-1.5">{% include "_includes/icon.html" with name="pin" class="icon-sm" %}Fotografia, Região Metropolitana</p>
+            <div class="mt-3"><span class="tag tag-neutral">Janela de 3 dias</span></div>
+        </div>
+    </div>
+</section>
+
+<section class="py-8 border-t border-line">
+    <h2 class="text-sm font-bold text-ink mb-5">Como funciona um chamado</h2>
+    <ol class="grid gap-5 sm:grid-cols-3">
+        <li>
+            <span class="font-narrow text-2xl font-bold text-beak-orange">1</span>
+            <p class="font-semibold text-sm mt-1">Publique o chamado</p>
+            <p class="text-ink-soft text-sm mt-1">Categoria, data, região e por quanto tempo fica aberto para respostas. Leva menos de 30 segundos.</p>
+        </li>
+        <li>
+            <span class="font-narrow text-2xl font-bold text-beak-orange">2</span>
+            <p class="font-semibold text-sm mt-1">Profissionais demonstram interesse</p>
+            <p class="text-ink-soft text-sm mt-1">Você vê quem está disponível, o perfil e as avaliações de cada um.</p>
+        </li>
+        <li>
+            <span class="font-narrow text-2xl font-bold text-beak-orange">3</span>
+            <p class="font-semibold text-sm mt-1">Você escolhe e conversa</p>
+            <p class="text-ink-soft text-sm mt-1">Selecionar alguém abre a conversa na hora. As demais posições continuam abertas, se houver.</p>
+        </li>
+    </ol>
 </section>
 {% endblock %}

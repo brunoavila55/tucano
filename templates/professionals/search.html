@@ -3,12 +3,12 @@
 {% block title %}Buscar profissionais — Tucano{% endblock %}
 
 {% block content %}
-<h1 class="text-xl font-semibold mb-4">Buscar profissionais</h1>
+<h1 class="text-2xl font-extrabold tracking-tight mb-5">Buscar profissionais</h1>
 
-<form hx-get="{% url 'professionals:search' %}" hx-target="#results" hx-push-url="true" class="space-y-3 mb-6">
-    <div>
-        <label class="block text-sm font-medium mb-1" for="categoria">Categoria</label>
-        <select name="categoria" id="categoria" class="border rounded px-2 py-1 w-full max-w-xs">
+<form hx-get="{% url 'professionals:search' %}" hx-target="#results" hx-push-url="true" hx-indicator="#search-spinner" class="card p-4 mb-6 flex flex-wrap items-end gap-4">
+    <div class="min-w-[12rem]">
+        <label class="field-label" for="categoria">Categoria</label>
+        <select name="categoria" id="categoria">
             <option value="">Todas</option>
             {% for c in categories %}
                 <option value="{{ c.slug }}" {% if c.slug == selected_category %}selected{% endif %}>{{ c.name }}</option>
@@ -17,9 +17,15 @@
     </div>
     <input type="hidden" name="lat" id="search-lat" value="{{ lat }}">
     <input type="hidden" name="lon" id="search-lon" value="{{ lon }}">
-    <div class="flex items-center gap-3">
-        <button type="button" id="use-location-search" class="text-sm underline">Usar minha localização</button>
-        <button type="submit" class="rounded bg-gray-900 text-white px-4 py-2 text-sm font-medium">Buscar</button>
+    <div class="flex items-center gap-4">
+        <button type="button" id="use-location-search" class="link text-sm inline-flex items-center gap-1.5">
+            {% include "_includes/icon.html" with name="pin" %}Usar minha localização
+        </button>
+        <button type="submit" class="btn btn-primary">
+            {% include "_includes/icon.html" with name="search" %}
+            <span class="btn-label">Buscar</span>
+            <span id="search-spinner" class="htmx-indicator spinner"></span>
+        </button>
     </div>
 </form>
 

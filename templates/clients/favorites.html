@@ -3,26 +3,37 @@
 {% block title %}Favoritos — Tucano{% endblock %}
 
 {% block content %}
-<h1 class="text-xl font-semibold mb-4">Profissionais favoritos</h1>
+<h1 class="text-2xl font-extrabold tracking-tight mb-5">Profissionais favoritos</h1>
 
-<ul class="space-y-3">
-    {% for favorite in favorites %}
-        <li class="rounded border border-gray-200 bg-white p-4 flex items-center justify-between">
-            <div>
-                <p class="font-medium">{{ favorite.professional.user }} — {{ favorite.professional.main_category|default:"Sem categoria" }}</p>
-                <p class="text-sm text-gray-600">{{ favorite.professional.location_label|default:"Região não informada" }}</p>
-            </div>
-            <div class="flex items-center gap-3">
-                <a href="{% url 'requests:create' %}?favorito={{ favorite.professional.pk }}" class="text-sm underline">Chamar novamente</a>
-                <form method="post" action="{% url 'clients:favorite-toggle' favorite.professional.pk %}">
-                    {% csrf_token %}
-                    <input type="hidden" name="next" value="{% url 'clients:favorites' %}">
-                    <button type="submit" class="text-sm text-red-600 underline">Remover</button>
-                </form>
-            </div>
-        </li>
-    {% empty %}
-        <li class="text-gray-500 text-sm">Você ainda não tem profissionais favoritos.</li>
-    {% endfor %}
-</ul>
+{% if favorites %}
+    <ul class="space-y-3">
+        {% for favorite in favorites %}
+            <li class="card p-4 flex items-center justify-between gap-3 flex-wrap">
+                <div class="flex items-center gap-3">
+                    {% include "_includes/avatar.html" with user=favorite.professional.user size="md" %}
+                    <div>
+                        <p class="font-bold text-ink">{{ favorite.professional.user }}</p>
+                        <p class="text-sm text-ink-soft mt-0.5">{{ favorite.professional.main_category|default:"Sem categoria" }}{% if favorite.professional.location_label %}, atende {{ favorite.professional.location_label }}{% endif %}</p>
+                    </div>
+                </div>
+                <div class="flex items-center gap-4">
+                    <a href="{% url 'requests:create' %}?favorito={{ favorite.professional.pk }}" class="btn btn-ghost">
+                        {% include "_includes/icon.html" with name="plus" %}
+                        <span class="btn-label">Chamar novamente</span>
+                    </a>
+                    <form method="post" action="{% url 'clients:favorite-toggle' favorite.professional.pk %}">
+                        {% csrf_token %}
+                        <input type="hidden" name="next" value="{% url 'clients:favorites' %}">
+                        <button type="submit" class="link-danger text-sm inline-flex items-center gap-1">
+                            {% include "_includes/icon.html" with name="x" class="icon-sm" %}Remover
+                        </button>
+                    </form>
+                </div>
+            </li>
+        {% endfor %}
+    </ul>
+{% else %}
+    {% url 'professionals:search' as search_url %}
+    {% include "_includes/empty_state.html" with icon="heart" title="Você ainda não tem profissionais favoritos" text="Salve quem você gostaria de chamar de novo." cta_url=search_url cta_label="Buscar profissionais" %}
+{% endif %}
 {% endblock %}

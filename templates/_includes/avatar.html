@@ -1,0 +1,5 @@
+{% comment %}
+Uso: {% include "_includes/avatar.html" with user=professional.user size="md" %}
+size: sm (28px, padrão) | md (36px) | lg (48px)
+{% endcomment %}
+<span class="avatar avatar-{{ size|default:"sm" }}">{{ user|stringformat:"s"|slice:":1"|upper }}</span>

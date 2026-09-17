@@ -3,71 +3,91 @@
 {% block title %}Confirmação do serviço — Tucano{% endblock %}
 
 {% block content %}
-<h1 class="text-xl font-semibold mb-4">Confirmação do serviço</h1>
+<h1 class="text-2xl font-extrabold tracking-tight mb-5">Confirmação do serviço</h1>
 
-<div class="rounded border border-gray-200 bg-white p-4 mb-6 space-y-3 text-sm">
-    <p>{{ confirmation.interest.service_request.title }}</p>
+<div class="card p-5 mb-6 space-y-4">
+    <p class="font-semibold text-sm">{{ confirmation.interest.service_request.title }}</p>
 
     {% if my_confirmed is None %}
         <div>
-            <p class="mb-2">O serviço aconteceu?</p>
-            <form method="post" action="{% url 'reviews:confirm' confirmation.interest_id %}" class="inline">
-                {% csrf_token %}
-                <input type="hidden" name="occurred" value="yes">
-                <button type="submit" class="rounded bg-gray-900 text-white px-3 py-1.5 text-sm">Sim</button>
-            </form>
-            <form method="post" action="{% url 'reviews:confirm' confirmation.interest_id %}" class="inline">
-                {% csrf_token %}
-                <input type="hidden" name="occurred" value="no">
-                <button type="submit" class="rounded border border-gray-300 px-3 py-1.5 text-sm">Não</button>
-            </form>
+            <p class="text-sm mb-3">O serviço aconteceu?</p>
+            <div class="flex items-center gap-3">
+                <form method="post" action="{% url 'reviews:confirm' confirmation.interest_id %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="occurred" value="yes">
+                    <button type="submit" class="btn btn-primary">
+                        {% include "_includes/icon.html" with name="check" %}
+                        <span class="btn-label">Sim</span>
+                    </button>
+                </form>
+                <form method="post" action="{% url 'reviews:confirm' confirmation.interest_id %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="occurred" value="no">
+                    <button type="submit" class="btn btn-ghost">
+                        {% include "_includes/icon.html" with name="x" %}
+                        <span class="btn-label">Não</span>
+                    </button>
+                </form>
+            </div>
         </div>
     {% else %}
-        <p>Sua resposta: <strong>{{ my_confirmed|yesno:"Sim,Não" }}</strong></p>
+        <p class="text-sm">Sua resposta: <strong>{{ my_confirmed|yesno:"Sim,Não" }}</strong></p>
     {% endif %}
 
     {% if other_confirmed is None %}
-        <p class="text-gray-500">Aguardando a confirmação da outra parte.</p>
+        <p class="text-sm text-ink-soft">Aguardando a confirmação da outra parte.</p>
     {% else %}
-        <p>Resposta da outra parte: <strong>{{ other_confirmed|yesno:"Sim,Não" }}</strong></p>
+        <p class="text-sm">Resposta da outra parte: <strong>{{ other_confirmed|yesno:"Sim,Não" }}</strong></p>
     {% endif %}
 
     {% if confirmation.has_dispute %}
-        <p class="text-red-600">As respostas divergem — este caso fica sinalizado para moderação.</p>
+        <p class="tag tag-cancelled tag-icon">{% include "_includes/icon.html" with name="alert" class="icon-sm" %}As respostas divergem — este caso fica sinalizado para moderação</p>
     {% endif %}
 </div>
 
 {% if confirmation.is_legitimate %}
-    <div class="rounded border border-gray-200 bg-white p-4 space-y-3 text-sm">
+    <div class="card p-5 space-y-4">
         {% if my_review %}
-            <p>Sua avaliação enviada: {{ my_review.rating }}/5 — {{ my_review.comment|default:"" }}</p>
+            <div>
+                <p class="text-sm text-ink-soft mb-1">Sua avaliação enviada</p>
+                <div class="flex items-center gap-2">
+                    {% include "_includes/stars.html" with rating=my_review.rating %}
+                    <span class="text-sm text-ink-soft">{{ my_review.comment|default:"" }}</span>
+                </div>
+            </div>
         {% else %}
-            <form method="post" action="{% url 'reviews:review-create' confirmation.interest_id %}" class="space-y-2 max-w-sm">
+            <form method="post" action="{% url 'reviews:review-create' confirmation.interest_id %}" class="space-y-3 max-w-sm">
                 {% csrf_token %}
-                <label class="block text-sm font-medium" for="{{ review_form.rating.id_for_label }}">Nota (1 a 5) para {{ target_user }}</label>
+                <label class="field-label" for="{{ review_form.rating.id_for_label }}">Nota (1 a 5) para {{ target_user }}</label>
                 {{ review_form.rating }}
-                <label class="block text-sm font-medium" for="{{ review_form.comment.id_for_label }}">Comentário (opcional)</label>
+                <label class="field-label" for="{{ review_form.comment.id_for_label }}">Comentário (opcional)</label>
                 {{ review_form.comment }}
-                <button type="submit" class="rounded bg-gray-900 text-white px-4 py-2 text-sm font-medium">Enviar avaliação</button>
+                <button type="submit" class="btn btn-primary">
+                    <span class="btn-label">Enviar avaliação</span>
+                </button>
             </form>
         {% endif %}
 
         {% if other_review %}
-            <div class="border-t pt-3">
-                <p>Avaliação recebida: {{ other_review.rating }}/5 — {{ other_review.comment|default:"" }}</p>
+            <div class="divider pt-4">
+                <p class="text-sm text-ink-soft mb-1">Avaliação recebida</p>
+                <div class="flex items-center gap-2">
+                    {% include "_includes/stars.html" with rating=other_review.rating %}
+                    <span class="text-sm text-ink-soft">{{ other_review.comment|default:"" }}</span>
+                </div>
                 {% if other_review.contested %}
-                    <p class="text-xs text-gray-500">Contestada: {{ other_review.contest_reason }}</p>
+                    <p class="text-xs text-ink-soft mt-1">Contestada: {{ other_review.contest_reason }}</p>
                 {% else %}
-                    <form method="post" action="{% url 'reviews:review-contest' other_review.pk %}" class="mt-2 space-y-2">
+                    <form method="post" action="{% url 'reviews:review-contest' other_review.pk %}" class="mt-3 space-y-2">
                         {% csrf_token %}
-                        <label class="block text-sm font-medium" for="{{ contest_form.reason.id_for_label }}">Motivo da contestação</label>
+                        <label class="field-label" for="{{ contest_form.reason.id_for_label }}">Motivo da contestação</label>
                         {{ contest_form.reason }}
-                        <button type="submit" class="text-sm text-red-600 underline">Contestar esta avaliação</button>
+                        <button type="submit" class="link-danger text-sm">Contestar esta avaliação</button>
                     </form>
                 {% endif %}
             </div>
         {% elif my_review %}
-            <p class="text-gray-500 text-sm border-t pt-3">A avaliação da outra parte só aparece depois que ambas forem enviadas.</p>
+            <p class="text-sm text-ink-soft divider pt-4">A avaliação da outra parte só aparece depois que ambas forem enviadas.</p>
         {% endif %}
     </div>
 {% endif %}

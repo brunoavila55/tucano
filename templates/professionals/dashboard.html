@@ -3,53 +3,105 @@
 {% block title %}Painel do profissional — Tucano{% endblock %}
 
 {% block content %}
-<div class="flex items-center justify-between mb-4">
-    <h1 class="text-xl font-semibold">Painel do profissional</h1>
-    <div class="flex gap-4">
-        <a href="{% url 'requests:compatible-list' %}" class="text-sm underline">Chamados compatíveis</a>
-        <a href="{% url 'professionals:update' %}" class="text-sm underline">Editar perfil</a>
+<div class="flex items-start justify-between gap-4 mb-6 flex-wrap">
+    <h1 class="text-2xl font-extrabold tracking-tight">Painel do profissional</h1>
+    <nav class="flex gap-4 text-sm pt-1">
+        <a href="{% url 'requests:compatible-list' %}" class="link inline-flex items-center gap-1.5">
+            {% include "_includes/icon.html" with name="inbox" %}Chamados compatíveis
+        </a>
+        <a href="{% url 'professionals:update' %}" class="link">Editar perfil</a>
+    </nav>
+</div>
+
+<div class="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-6">
+    <div class="stat-card">
+        <p class="stat-card-value">{{ availabilities|length }}</p>
+        <p class="stat-card-label">Horários cadastrados</p>
+    </div>
+    <div class="stat-card">
+        <p class="stat-card-value">{{ portfolio_items|length }}</p>
+        <p class="stat-card-label">Fotos no portfólio</p>
+    </div>
+    <div class="stat-card col-span-2 sm:col-span-1">
+        <p class="stat-card-value flex items-center gap-2">
+            {% if profile.is_available_now %}
+                {% include "_includes/icon.html" with name="bolt" class="icon-sm text-beak-yellow" %}Sim
+            {% else %}
+                Não
+            {% endif %}
+        </p>
+        <p class="stat-card-label">Disponível agora</p>
     </div>
 </div>
 
-<div class="rounded border border-gray-200 bg-white p-4 mb-6">
-    <p><strong>Categoria:</strong> {{ profile.main_category|default:"—" }}</p>
-    <p><strong>Bio:</strong> {{ profile.bio|default:"—" }}</p>
-    <p><strong>Habilidades:</strong> {{ profile.skills|default:"—" }}</p>
-    <p><strong>Região:</strong> {{ profile.location_label|default:"—" }}</p>
-    <p><strong>Disponível agora:</strong> {{ profile.is_available_now|yesno:"Sim,Não" }}</p>
+<div class="card p-4 mb-6">
+    <div class="flex items-center gap-3 mb-3">
+        {% include "_includes/avatar.html" with user=request.user size="md" %}
+        <div>
+            <p class="font-bold text-ink">{{ profile.main_category|default:"Sem categoria definida" }}</p>
+            <p class="text-xs text-ink-soft">{{ profile.location_label|default:"Região não informada" }}</p>
+        </div>
+    </div>
+    <dl class="text-sm space-y-2">
+        <div>
+            <dt class="text-ink-soft">Bio</dt>
+            <dd>{{ profile.bio|default:"—" }}</dd>
+        </div>
+        <div>
+            <dt class="text-ink-soft">Habilidades</dt>
+            <dd>{{ profile.skills|default:"—" }}</dd>
+        </div>
+    </dl>
 </div>
 
 <div class="mb-6">
-    <div class="flex items-center justify-between mb-2">
-        <h2 class="font-medium">Disponibilidade</h2>
-        <a href="{% url 'professionals:availability-create' %}" class="text-sm underline">Adicionar</a>
+    <div class="flex items-center justify-between mb-3">
+        <h2 class="font-bold text-ink inline-flex items-center gap-2">
+            {% include "_includes/icon.html" with name="clock" %}Disponibilidade
+        </h2>
+        <a href="{% url 'professionals:availability-create' %}" class="link text-sm inline-flex items-center gap-1">
+            {% include "_includes/icon.html" with name="plus" class="icon-sm" %}Adicionar
+        </a>
     </div>
-    <ul class="space-y-1 text-sm">
-        {% for a in availabilities %}
-            <li class="flex items-center justify-between">
-                <span>{{ a }}</span>
-                <a href="{% url 'professionals:availability-delete' a.pk %}" class="text-red-600 underline">excluir</a>
-            </li>
-        {% empty %}
-            <li class="text-gray-500">Nenhum horário cadastrado.</li>
-        {% endfor %}
-    </ul>
+    {% if availabilities %}
+        <ul class="space-y-2">
+            {% for a in availabilities %}
+                <li class="card px-3 py-2 text-sm flex items-center justify-between">
+                    <span>{{ a }}</span>
+                    <a href="{% url 'professionals:availability-delete' a.pk %}" class="link-danger text-sm inline-flex items-center gap-1">
+                        {% include "_includes/icon.html" with name="trash" class="icon-sm" %}excluir
+                    </a>
+                </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        {% url 'professionals:availability-create' as availability_create_url %}
+        {% include "_includes/empty_state.html" with icon="clock" title="Nenhum horário cadastrado" text="Defina quando você costuma estar disponível para que chamados compatíveis te encontrem." cta_url=availability_create_url cta_label="Adicionar disponibilidade" %}
+    {% endif %}
 </div>
 
 <div>
-    <div class="flex items-center justify-between mb-2">
-        <h2 class="font-medium">Portfólio</h2>
-        <a href="{% url 'professionals:portfolio-create' %}" class="text-sm underline">Adicionar foto</a>
+    <div class="flex items-center justify-between mb-3">
+        <h2 class="font-bold text-ink inline-flex items-center gap-2">
+            {% include "_includes/icon.html" with name="camera" %}Portfólio
+        </h2>
+        <a href="{% url 'professionals:portfolio-create' %}" class="link text-sm inline-flex items-center gap-1">
+            {% include "_includes/icon.html" with name="plus" class="icon-sm" %}Adicionar foto
+        </a>
     </div>
-    <div class="grid grid-cols-3 gap-2">
-        {% for item in portfolio_items %}
-            <div class="relative">
-                <img src="{{ item.image.url }}" alt="{{ item.caption|default:"Foto do portfólio" }}" class="rounded w-full h-24 object-cover">
-                <a href="{% url 'professionals:portfolio-delete' item.pk %}" class="absolute top-1 right-1 text-xs bg-white/80 rounded px-1">excluir</a>
-            </div>
-        {% empty %}
-            <p class="text-gray-500 text-sm col-span-3">Nenhuma foto ainda.</p>
-        {% endfor %}
-    </div>
+    {% if portfolio_items %}
+        <div class="grid grid-cols-3 gap-2">
+            {% for item in portfolio_items %}
+                <div class="relative group">
+                    <img src="{{ item.image.url }}" alt="{{ item.caption|default:"Foto do portfólio" }}" class="rounded w-full aspect-square object-cover border border-line">
+                    <a href="{% url 'professionals:portfolio-delete' item.pk %}" class="absolute top-1.5 right-1.5 bg-ink/80 text-surface rounded p-1 leading-none">
+                        {% include "_includes/icon.html" with name="trash" class="icon-sm" %}
+                    </a>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        {% include "_includes/empty_state.html" with icon="camera" title="Nenhuma foto ainda" text="Perfis com portfólio recebem mais interesse dos contratantes." %}
+    {% endif %}
 </div>
 {% endblock %}
