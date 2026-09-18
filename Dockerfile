@@ -1,32 +1,25 @@
-FROM python:3.12-slim AS base
+FROM golang:1.23-alpine AS build
 
-ENV PYTHONDONTWRITEBYTECODE=1 \
-    PYTHONUNBUFFERED=1 \
-    UV_COMPILE_BYTECODE=1 \
-    UV_LINK_MODE=copy
+WORKDIR /src
+RUN apk add --no-cache ca-certificates git
 
-# GDAL/GEOS/PROJ para django.contrib.gis (stack.md §4) + libpq para psycopg.
-# postgresql-client dá o pg_dump usado no backup automatizado (Etapa 11).
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    binutils \
-    gdal-bin \
-    libgdal-dev \
-    libproj-dev \
-    libpq-dev \
-    postgresql-client \
-    gcc \
-    && rm -rf /var/lib/apt/lists/*
+COPY go.mod go.sum* ./
+RUN go mod download
 
-COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /usr/local/bin/
+COPY cmd ./cmd
+COPY internal ./internal
+RUN CGO_ENABLED=0 GOOS=linux go build -trimpath -ldflags="-s -w" -o /out/api ./cmd/api && \
+    CGO_ENABLED=0 GOOS=linux go build -trimpath -ldflags="-s -w" -o /out/worker ./cmd/worker
+
+FROM alpine:3.22
+
+RUN apk add --no-cache ca-certificates su-exec tzdata && \
+    addgroup -S tucano && adduser -S -G tucano tucano
 
 WORKDIR /app
+COPY --from=build --chown=tucano:tucano /out/api /out/worker ./
+COPY --chmod=755 docker/entrypoint-go.sh /usr/local/bin/entrypoint-go
 
-COPY pyproject.toml uv.lock ./
-RUN uv sync --frozen --no-install-project
-
-COPY . .
-RUN uv sync --frozen
-
-ENV PATH="/app/.venv/bin:$PATH"
-
-EXPOSE 8000
+EXPOSE 8080
+ENTRYPOINT ["/usr/local/bin/entrypoint-go"]
+CMD ["/app/api"]

@@ -1,93 +1,98 @@
 # Tucano
 
-Marketplace nacional e freemium que conecta contratantes a profissionais autônomos disponíveis para serviços pontuais (eventos, gastronomia, casa, manutenção, estética/beleza, engenharia/arquitetura, contabilidade e outras categorias, respeitando as exclusões jurídicas do produto).
+Marketplace nacional e freemium que aproxima contratantes de profissionais autônomos disponíveis para serviços pontuais. A plataforma cuida de descoberta, disponibilidade, reputação e contato direto; não processa o pagamento do serviço nem cobra comissão sobre ele.
 
-`tucano` é o codinome de desenvolvimento — o branding final é uma decisão separada e não afeta nomes de módulo/pacote.
+## Estado da reconstrução
 
-A plataforma **não** processa o pagamento do serviço, não cobra comissão e não é empregadora dos profissionais: ela cuida de descoberta local, disponibilidade, reputação e contato direto entre as partes.
+O projeto está sendo refeito em Go + SvelteKit conforme o [CODEX.md](CODEX.md). As **Etapas 0 a 2 — Fundação, identidade, perfis e descoberta local** já estão estruturadas:
 
-## Documentação de referência
+- API Go 1.23 com `chi`, logs estruturados, CORS, request ID, recuperação de panic e rate limit;
+- PostgreSQL 16 + PostGIS, migrações versionadas e acesso SQL preparado com `sqlc`;
+- `AuditEvent` como infraestrutura transversal desde a primeira migração;
+- Redis 7 e worker Asynq;
+- frontend SvelteKit/TypeScript com Tailwind, mobile first, consumindo `/api/health`;
+- Docker Compose com `api`, `worker`, `web`, `postgres`, `redis`, `migrate` e Traefik;
+- testes backend/frontend e CI com publicação das imagens no GHCR em `main`;
+- cadastro, confirmação de e-mail, login, refresh rotativo, logout e recuperação de senha;
+- perfis profissional e contratante coexistindo na mesma conta, com autorização no servidor;
+- catálogo inicial de categorias permitido pelas decisões de produto;
+- perfil profissional com apresentação, habilidades, região, disponibilidade e portfólio básico;
+- busca PostGIS paginada por categoria e distância, sem expor coordenadas exatas;
+- telas mobile-first para autenticação, alternância de perfil, edição profissional e busca local.
 
-Antes de mexer em qualquer código, leia nesta ordem:
+O código Django anterior permanece temporariamente em `apps/`, `config/`, `templates/` e `static/` apenas como referência durante a migração dos fluxos. Ele não participa mais do runtime definido pelo Docker Compose e será removido quando os respectivos domínios forem portados.
 
-1. **[AGENTS.md](AGENTS.md)** — regras de produto: visão, posicionamento, decisões já tomadas, fluxos essenciais (chamado, janela de interesse, seleção), entidades do domínio, limites jurídicos, privacidade e critério de qualidade.
-2. **[stack.md](stack.md)** — decisões técnicas e o porquê de cada uma.
-3. **[CLAUDE.md](CLAUDE.md)** — roteiro de desenvolvimento do MVP, dividido em etapas sequenciais (cada uma depende dos models/dados da anterior).
+## Documentação que governa o projeto
 
-Qualquer ambiguidade de produto (stack, preços/limites de planos, ranking, localização/contato, verificação de identidade, moderação, termos jurídicos) deve virar uma hipótese registrada ou uma pergunta — nunca uma decisão silenciosa. Ver "Como trabalhar neste repositório" em AGENTS.md.
+Leia nesta ordem:
 
-## Stack
+1. [AGENTS.md](AGENTS.md): produto, autonomia, privacidade, limites jurídicos e critérios de qualidade;
+2. [ROADMAP.md](ROADMAP.md): progresso atual, próximos marcos e pendências;
+3. [CODEX.md](CODEX.md): stack atual e roteiro detalhado de reconstrução;
+4. [stack.md](stack.md): resumo operacional da arquitetura vigente;
+5. [openapi.yaml](openapi.yaml): contrato HTTP atual.
 
-- **Backend:** Django 5.2 (Python 3.12), monólito modular, ASGI via Daphne.
-- **Apps por domínio:** `accounts`, `professionals`, `clients`, `requests`, `chat`, `reviews`, `subscriptions`, `moderation`.
-- **Frontend:** Django Templates + HTMX (+ Alpine.js pontual) + Tailwind CSS, mobile-first.
-- **Tempo real:** Django Channels + Redis (chat).
-- **Banco de dados:** PostgreSQL 16 + PostGIS 3.4 (`django.contrib.gis`) para região atendida e distância aproximada.
-- **Jobs assíncronos:** Celery + Redis, com `beat` para expiração automática de chamados e outras tarefas agendadas.
-- **Notificações:** Web Push (PWA), fallback WhatsApp/SMS (Twilio) e e-mail.
-- **Pagamentos:** Mercado Pago, apenas para a assinatura Premium (nunca para o valor do serviço).
-- **Infra:** Docker Compose (`web`, `worker`, `beat`, `postgres`, `redis`, `caddy`), Caddy como proxy reverso com TLS automático.
-- **Testes:** `pytest-django`.
+## Rodar localmente
 
-Detalhes e justificativas de cada escolha em [stack.md](stack.md).
-
-## Estrutura do repositório
-
-```
-apps/            # apps Django por domínio de produto
-  accounts/      # User, autenticação (django-allauth)
-  professionals/ # ProfessionalProfile, categorias, disponibilidade
-  clients/       # ClientProfile
-  requests/      # ServiceRequest, Interest, janela de interesse
-  chat/          # Conversation, mensagens em tempo real
-  reviews/       # avaliação bilateral, confirmação pós-serviço
-  subscriptions/ # assinatura Premium, boosts
-  moderation/    # denúncia, bloqueio, verificação
-config/          # settings, urls, asgi/wsgi, Celery
-docker/          # configuração auxiliar (ex.: Caddyfile)
-templates/       # templates Django
-static/          # assets estáticos versionados
-media/           # uploads (dev local)
-```
-
-## Como rodar localmente
-
-Pré-requisitos: [`uv`](https://docs.astral.sh/uv/) e Docker (com Compose).
+Pré-requisitos: Docker com Compose.
 
 ```bash
 cp .env.example .env
-# ajuste DJANGO_SECRET_KEY e demais variáveis conforme necessário
-
-docker compose up
+docker compose up --build
 ```
 
-Isso sobe `web` (Daphne), `worker` e `beat` (Celery), `postgres` (PostGIS) e `redis`, atrás do `caddy` como proxy reverso (em dev, exposto em `http://localhost:8080`).
-
-Canais de notificação (Web Push, WhatsApp/SMS, Mercado Pago) ficam desabilitados enquanto as variáveis correspondentes em `.env` estiverem em branco — o envio é apenas registrado em vez de chamar o provedor real.
-
-### Rodando sem Docker
+O frontend fica em <http://localhost:8080> e a saúde da API em <http://localhost:8080/api/health>.
 
 ```bash
-uv sync
-uv run manage.py migrate
-uv run manage.py createsuperuser
-uv run manage.py runserver
+docker compose ps
+docker compose logs -f api worker web
 ```
 
-Requer PostgreSQL com PostGIS e Redis acessíveis localmente (ajuste `DATABASE_URL` e `REDIS_URL` em `.env`).
+As migrações são executadas pelo serviço descartável `migrate`, antes da API. Em produção, esse passo deve continuar explícito no deploy; a aplicação nunca altera o schema silenciosamente.
 
-### Testes
+## Desenvolvimento sem Compose
+
+Backend (requer Go 1.23+, PostgreSQL/PostGIS e Redis):
 
 ```bash
-uv run pytest
+export DATABASE_URL='postgres://tucano:senha@localhost:5432/tucano?sslmode=disable'
+export REDIS_URL='redis://localhost:6379/0'
+export UPLOAD_DIR='/tmp/tucano-uploads'
+go run ./cmd/api
 ```
 
-ou, dentro do container:
+Frontend (requer Node 22 e pnpm):
 
 ```bash
-docker compose exec web pytest
+cd web
+pnpm install
+pnpm dev
 ```
 
-## Roteiro de desenvolvimento
+O proxy de desenvolvimento do Vite encaminha `/api` para `http://localhost:8080`.
 
-O MVP é construído em etapas sequenciais definidas em [CLAUDE.md](CLAUDE.md): fundação do projeto → identidade e perfis → categorias/região/disponibilidade → chamados e janela de interesse → chat → notificações → PWA → confirmação e avaliação → favoritos → moderação → monetização → hardening/observabilidade → testes e qualidade contínua. Não pule etapas: cada uma depende de models/dados criados na anterior.
+## Verificações
+
+```bash
+go test ./...
+cd web && pnpm test && pnpm check && pnpm lint && pnpm build
+docker compose config --quiet
+```
+
+O código gerado pelo `sqlc` fica versionado em `internal/platform/database/sqlc`. Para regenerá-lo após alterar migrations ou queries:
+
+```bash
+make generate
+```
+
+## Estrutura ativa
+
+```text
+cmd/api/                 processo HTTP
+cmd/worker/              jobs Asynq
+internal/<domínio>/      regras do produto por domínio
+internal/platform/       configuração, HTTP, banco e auditoria
+migrations/              schema versionado (golang-migrate)
+queries/                 SQL tipado pelo sqlc
+web/                     aplicação SvelteKit
+```

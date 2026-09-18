@@ -1,0 +1,386 @@
+openapi: 3.0.3
+info:
+  title: Tucano API
+  version: 0.3.0
+  description: >-
+    API do marketplace de profissionais autônomos. A plataforma facilita descoberta,
+    compatibilidade e contato direto; não processa o pagamento dos serviços.
+servers:
+  - url: /api
+paths:
+  /health:
+    get:
+      tags: [system]
+      summary: Verifica a saúde da API e suas dependências
+      responses:
+        "200":
+          description: API disponível
+          content: {application/json: {schema: {$ref: "#/components/schemas/Health"}}}
+        "503": {$ref: "#/components/responses/ServiceUnavailable"}
+  /auth/register:
+    post:
+      tags: [authentication]
+      summary: Cria conta com o primeiro perfil
+      requestBody:
+        required: true
+        content: {application/json: {schema: {$ref: "#/components/schemas/RegisterRequest"}}}
+      responses:
+        "201": {description: Conta criada; confirmação de e-mail pendente}
+        "409": {$ref: "#/components/responses/Conflict"}
+        "422": {$ref: "#/components/responses/ValidationError"}
+  /auth/verify-email:
+    post:
+      tags: [authentication]
+      summary: Confirma o e-mail com token de uso único
+      requestBody: {$ref: "#/components/requestBodies/Token"}
+      responses:
+        "200": {description: E-mail confirmado}
+        "401": {$ref: "#/components/responses/InvalidToken"}
+  /auth/resend-verification:
+    post:
+      tags: [authentication]
+      summary: Solicita novo link sem revelar se a conta existe
+      requestBody: {$ref: "#/components/requestBodies/Email"}
+      responses:
+        "202": {description: Solicitação aceita}
+  /auth/login:
+    post:
+      tags: [authentication]
+      summary: Autentica e define o refresh token em cookie HttpOnly
+      requestBody:
+        required: true
+        content: {application/json: {schema: {$ref: "#/components/schemas/LoginRequest"}}}
+      responses:
+        "200":
+          description: Sessão criada
+          headers:
+            Set-Cookie: {schema: {type: string}, description: Refresh token HttpOnly e SameSite=Strict}
+          content: {application/json: {schema: {$ref: "#/components/schemas/Session"}}}
+        "401": {description: Credenciais inválidas, content: {application/json: {schema: {$ref: "#/components/schemas/Error"}}}}
+        "403": {description: E-mail pendente ou conta indisponível, content: {application/json: {schema: {$ref: "#/components/schemas/Error"}}}}
+  /auth/refresh:
+    post:
+      tags: [authentication]
+      summary: Rotaciona o refresh token e emite novo access token
+      responses:
+        "200": {description: Sessão renovada, content: {application/json: {schema: {$ref: "#/components/schemas/Session"}}}}
+        "401": {$ref: "#/components/responses/InvalidToken"}
+  /auth/logout:
+    post:
+      tags: [authentication]
+      summary: Revoga o refresh token atual
+      responses:
+        "204": {description: Sessão encerrada}
+  /auth/forgot-password:
+    post:
+      tags: [authentication]
+      summary: Solicita redefinição sem revelar se a conta existe
+      requestBody: {$ref: "#/components/requestBodies/Email"}
+      responses:
+        "202": {description: Solicitação aceita}
+  /auth/reset-password:
+    post:
+      tags: [authentication]
+      summary: Redefine a senha e revoga todas as sessões
+      requestBody:
+        required: true
+        content: {application/json: {schema: {$ref: "#/components/schemas/ResetPasswordRequest"}}}
+      responses:
+        "200": {description: Senha redefinida}
+        "401": {$ref: "#/components/responses/InvalidToken"}
+  /account/me:
+    get:
+      tags: [account]
+      summary: Retorna a conta e seus perfis atuais
+      security: [{bearerAuth: []}]
+      responses:
+        "200": {description: Conta atual}
+        "401": {$ref: "#/components/responses/InvalidToken"}
+  /account/profiles:
+    post:
+      tags: [account]
+      summary: Adiciona o segundo perfil à mesma conta
+      security: [{bearerAuth: []}]
+      requestBody:
+        required: true
+        content: {application/json: {schema: {$ref: "#/components/schemas/ProfileRequest"}}}
+      responses:
+        "201": {description: Perfil adicionado}
+        "409": {$ref: "#/components/responses/Conflict"}
+  /professional/dashboard:
+    get:
+      tags: [professional]
+      summary: Endpoint protegido por perfil profissional
+      security: [{bearerAuth: []}]
+      responses:
+        "200": {description: Acesso profissional autorizado}
+        "403": {description: Perfil profissional necessário}
+  /client/dashboard:
+    get:
+      tags: [client]
+      summary: Endpoint protegido por perfil contratante
+      security: [{bearerAuth: []}]
+      responses:
+        "200": {description: Acesso contratante autorizado}
+        "403": {description: Perfil contratante necessário}
+  /categories:
+    get:
+      tags: [discovery]
+      summary: Lista categorias de serviço ativas
+      description: O catálogo não inclui categorias vedadas pelas decisões de produto.
+      responses:
+        "200":
+          description: Catálogo ativo
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [categories]
+                properties:
+                  categories: {type: array, items: {$ref: "#/components/schemas/ServiceCategory"}}
+  /professional/profile:
+    get:
+      tags: [professional]
+      summary: Retorna o perfil profissional privado da conta
+      security: [{bearerAuth: []}]
+      responses:
+        "200": {description: Perfil atual, content: {application/json: {schema: {type: object, properties: {profile: {$ref: "#/components/schemas/ProfessionalProfile"}}}}}}
+        "403": {description: Perfil profissional necessário}
+    put:
+      tags: [professional]
+      summary: Atualiza apresentação, categoria, região e disponibilidade
+      description: Coordenadas são armazenadas para cálculo geoespacial e nunca retornadas.
+      security: [{bearerAuth: []}]
+      requestBody:
+        required: true
+        content: {application/json: {schema: {$ref: "#/components/schemas/ProfessionalProfileInput"}}}
+      responses:
+        "200": {description: Perfil atualizado}
+        "422": {$ref: "#/components/responses/ValidationError"}
+  /professional/portfolio:
+    post:
+      tags: [professional]
+      summary: Adiciona uma imagem ao portfólio básico
+      description: Aceita JPEG ou PNG com até 5 MB; o limite técnico atual é de 12 imagens.
+      security: [{bearerAuth: []}]
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file]
+              properties: {file: {type: string, format: binary}}
+      responses:
+        "201": {description: Imagem adicionada}
+        "413": {description: Arquivo grande demais}
+        "415": {description: Tipo de mídia não permitido}
+  /professional/portfolio/{itemId}:
+    delete:
+      tags: [professional]
+      summary: Remove uma imagem pertencente ao profissional
+      security: [{bearerAuth: []}]
+      parameters:
+        - {in: path, name: itemId, required: true, schema: {type: string, format: uuid}}
+      responses:
+        "204": {description: Imagem removida}
+        "404": {description: Item não encontrado ou não pertencente à conta}
+  /professionals/search:
+    get:
+      tags: [discovery]
+      summary: Busca profissionais relevantes por categoria e distância
+      description: Retorna somente região declarada e distância arredondada, sem coordenadas.
+      security: [{bearerAuth: []}]
+      parameters:
+        - {in: query, name: category_id, required: true, schema: {type: string, format: uuid}}
+        - {in: query, name: latitude, required: true, schema: {type: number, minimum: -90, maximum: 90}}
+        - {in: query, name: longitude, required: true, schema: {type: number, minimum: -180, maximum: 180}}
+        - {in: query, name: radius_km, schema: {type: integer, minimum: 1, maximum: 200, default: 25}}
+        - {in: query, name: available_now, schema: {type: boolean, default: false}}
+        - {in: query, name: page, schema: {type: integer, minimum: 1, default: 1}}
+        - {in: query, name: page_size, schema: {type: integer, minimum: 1, maximum: 50, default: 20}}
+      responses:
+        "200": {description: Página de profissionais, content: {application/json: {schema: {$ref: "#/components/schemas/ProfessionalSearchPage"}}}}
+        "403": {description: Perfil contratante necessário}
+        "422": {$ref: "#/components/responses/ValidationError"}
+  /uploads/{storageKey}:
+    get:
+      tags: [discovery]
+      summary: Serve uma imagem pública do portfólio por chave não previsível
+      parameters:
+        - {in: path, name: storageKey, required: true, schema: {type: string}}
+      responses:
+        "200": {description: Imagem JPEG ou PNG}
+        "404": {description: Arquivo não encontrado}
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  requestBodies:
+    Email:
+      required: true
+      content: {application/json: {schema: {type: object, required: [email], properties: {email: {type: string, format: email}}}}}
+    Token:
+      required: true
+      content: {application/json: {schema: {type: object, required: [token], properties: {token: {type: string}}}}}
+  responses:
+    InvalidToken:
+      description: Token ausente, inválido ou expirado
+      content: {application/json: {schema: {$ref: "#/components/schemas/Error"}}}
+    ValidationError:
+      description: Dados inválidos
+      content: {application/json: {schema: {$ref: "#/components/schemas/Error"}}}
+    Conflict:
+      description: Recurso já existente
+      content: {application/json: {schema: {$ref: "#/components/schemas/Error"}}}
+    ServiceUnavailable:
+      description: Dependência indisponível
+      content: {application/json: {schema: {$ref: "#/components/schemas/Health"}}}
+  schemas:
+    RegisterRequest:
+      type: object
+      required: [email, password, display_name, profile_type]
+      properties:
+        email: {type: string, format: email, maxLength: 254}
+        password: {type: string, format: password, minLength: 12, maxLength: 128}
+        display_name: {type: string, minLength: 2, maxLength: 100}
+        profile_type: {type: string, enum: [professional, client]}
+        company_name: {type: string, maxLength: 150}
+    LoginRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email: {type: string, format: email}
+        password: {type: string, format: password}
+    ResetPasswordRequest:
+      type: object
+      required: [token, password]
+      properties:
+        token: {type: string}
+        password: {type: string, format: password, minLength: 12, maxLength: 128}
+    ProfileRequest:
+      type: object
+      required: [profile_type]
+      properties:
+        profile_type: {type: string, enum: [professional, client]}
+        company_name: {type: string, maxLength: 150}
+    ServiceCategory:
+      type: object
+      required: [id, slug, name, description]
+      properties:
+        id: {type: string, format: uuid}
+        slug: {type: string}
+        name: {type: string}
+        description: {type: string}
+    AvailabilityInput:
+      type: object
+      required: [weekday, start_time, end_time]
+      properties:
+        weekday: {type: integer, minimum: 0, maximum: 6, description: Domingo é 0 e sábado é 6.}
+        start_time: {type: string, pattern: "^[0-2][0-9]:[0-5][0-9]$"}
+        end_time: {type: string, pattern: "^[0-2][0-9]:[0-5][0-9]$"}
+    ProfessionalProfileInput:
+      type: object
+      required: [bio, primary_category_id, skills, service_region, service_radius_km, available_now, availability_timezone, availabilities]
+      properties:
+        bio: {type: string, maxLength: 600}
+        primary_category_id: {type: string, format: uuid}
+        skills: {type: array, maxItems: 20, items: {type: string, maxLength: 50}}
+        service_region: {type: string, minLength: 2, maxLength: 120}
+        latitude: {type: number, minimum: -90, maximum: 90, writeOnly: true}
+        longitude: {type: number, minimum: -180, maximum: 180, writeOnly: true}
+        service_radius_km: {type: integer, minimum: 1, maximum: 200}
+        reference_price_cents: {type: integer, nullable: true, minimum: 0}
+        available_now: {type: boolean}
+        availability_timezone: {type: string, example: America/Sao_Paulo}
+        availabilities: {type: array, maxItems: 21, items: {$ref: "#/components/schemas/AvailabilityInput"}}
+    ProfessionalProfile:
+      type: object
+      required: [id, bio, skills, service_region, location_configured, service_radius_km, available_now, availability_timezone, availabilities, portfolio]
+      properties:
+        id: {type: string, format: uuid}
+        bio: {type: string}
+        primary_category: {allOf: [{$ref: "#/components/schemas/ServiceCategory"}], nullable: true}
+        skills: {type: array, items: {type: string}}
+        service_region: {type: string}
+        location_configured: {type: boolean}
+        service_radius_km: {type: integer}
+        reference_price_cents: {type: integer, nullable: true}
+        available_now: {type: boolean}
+        availability_timezone: {type: string}
+        availabilities: {type: array, items: {$ref: "#/components/schemas/AvailabilityInput"}}
+        portfolio: {type: array, items: {$ref: "#/components/schemas/PortfolioItem"}}
+    PortfolioItem:
+      type: object
+      required: [id, url, original_name, media_type, size_bytes, sort_order]
+      properties:
+        id: {type: string, format: uuid}
+        url: {type: string}
+        original_name: {type: string}
+        media_type: {type: string, enum: [image/jpeg, image/png]}
+        size_bytes: {type: integer}
+        sort_order: {type: integer}
+    ProfessionalSearchResult:
+      type: object
+      description: Não contém latitude, longitude nem a coluna geoespacial armazenada.
+      required: [id, display_name, category, skills, service_region, service_radius_km, available_now, distance_km]
+      properties:
+        id: {type: string, format: uuid}
+        display_name: {type: string}
+        bio: {type: string}
+        category: {$ref: "#/components/schemas/ServiceCategory"}
+        skills: {type: array, items: {type: string}}
+        service_region: {type: string}
+        service_radius_km: {type: integer}
+        reference_price_cents: {type: integer, nullable: true}
+        available_now: {type: boolean}
+        distance_km: {type: number, format: double}
+        cover_url: {type: string}
+    ProfessionalSearchPage:
+      type: object
+      required: [items, page, page_size, total, total_pages]
+      properties:
+        items: {type: array, items: {$ref: "#/components/schemas/ProfessionalSearchResult"}}
+        page: {type: integer}
+        page_size: {type: integer}
+        total: {type: integer}
+        total_pages: {type: integer}
+    User:
+      type: object
+      required: [id, email, display_name, email_verified, roles]
+      properties:
+        id: {type: string, format: uuid}
+        email: {type: string, format: email}
+        display_name: {type: string}
+        email_verified: {type: boolean}
+        roles:
+          type: array
+          items: {type: string, enum: [professional, client]}
+    Session:
+      type: object
+      required: [access_token, access_expires_at, user]
+      properties:
+        access_token: {type: string}
+        access_expires_at: {type: string, format: date-time}
+        user: {$ref: "#/components/schemas/User"}
+    Health:
+      type: object
+      required: [status, service, version, checks, date_time]
+      properties:
+        status: {type: string, enum: [ok, degraded]}
+        service: {type: string}
+        version: {type: string}
+        checks: {type: object, additionalProperties: {type: string}}
+        date_time: {type: string, format: date-time}
+    Error:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: object
+          required: [code, message]
+          properties:
+            code: {type: string}
+            message: {type: string}

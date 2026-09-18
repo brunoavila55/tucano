@@ -1,89 +1,138 @@
+name: tucano
+
 services:
-  db:
-    image: postgis/postgis:16-3.4
+  postgres:
+    image: postgis/postgis:16-3.4-alpine
     environment:
-      POSTGRES_DB: tucano
-      POSTGRES_USER: tucano
-      POSTGRES_PASSWORD: tucano
+      POSTGRES_DB: ${POSTGRES_DB:-tucano}
+      POSTGRES_USER: ${POSTGRES_USER:-tucano}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-tucano-local-only}
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U tucano"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-tucano} -d ${POSTGRES_DB:-tucano}"]
       interval: 5s
       timeout: 5s
-      retries: 10
+      retries: 12
+    restart: unless-stopped
 
   redis:
     image: redis:7-alpine
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 5s
       timeout: 5s
-      retries: 10
+      retries: 12
+    restart: unless-stopped
 
-  web:
-    build: .
-    command: daphne -b 0.0.0.0 -p 8000 config.asgi:application
+  migrate:
+    image: migrate/migrate:v4.18.3
+    command:
+      - -path=/migrations
+      - -database=postgres://${POSTGRES_USER:-tucano}:${POSTGRES_PASSWORD:-tucano-local-only}@postgres:5432/${POSTGRES_DB:-tucano}?sslmode=disable
+      - up
     volumes:
-      - .:/app
-      - /app/.venv
-      - static_data:/app/staticfiles
-      - media_data:/app/media
-    env_file: .env
+      - ./migrations:/migrations:ro
     depends_on:
-      db:
+      postgres:
         condition: service_healthy
+    restart: "no"
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      APP_ENV: ${APP_ENV:-development}
+      APP_ORIGIN: ${APP_ORIGIN:-http://localhost:8080}
+      API_PORT: "8080"
+      JWT_SECRET: ${JWT_SECRET:-development-only-secret-change-me}
+      DATABASE_URL: postgres://${POSTGRES_USER:-tucano}:${POSTGRES_PASSWORD:-tucano-local-only}@postgres:5432/${POSTGRES_DB:-tucano}?sslmode=disable
+      REDIS_URL: redis://redis:6379/0
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-http://localhost:8080,http://localhost:5173}
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USERNAME: ${SMTP_USERNAME:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      SMTP_FROM: ${SMTP_FROM:-}
+      UPLOAD_DIR: /data/uploads
+    volumes:
+      - uploads_data:/data/uploads
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
       redis:
         condition: service_healthy
-    expose:
-      - "8000"
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://127.0.0.1:8080/health"]
+      interval: 10s
+      timeout: 3s
+      retries: 6
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.tucano-api.rule=PathPrefix(`/api`)
+      - traefik.http.routers.tucano-api.priority=100
+      - traefik.http.routers.tucano-api.entrypoints=web
+      - traefik.http.routers.tucano-api.middlewares=tucano-strip-api
+      - traefik.http.middlewares.tucano-strip-api.stripprefix.prefixes=/api
+      - traefik.http.services.tucano-api.loadbalancer.server.port=8080
+    restart: unless-stopped
 
   worker:
-    build: .
-    command: celery -A config worker -l info
-    volumes:
-      - .:/app
-      - /app/.venv
-      - media_data:/app/media
-    env_file: .env
+    build:
+      context: .
+      dockerfile: Dockerfile
+    command: ["/app/worker"]
+    environment:
+      APP_ENV: ${APP_ENV:-development}
+      DATABASE_URL: postgres://${POSTGRES_USER:-tucano}:${POSTGRES_PASSWORD:-tucano-local-only}@postgres:5432/${POSTGRES_DB:-tucano}?sslmode=disable
+      REDIS_URL: redis://redis:6379/0
     depends_on:
-      db:
-        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
       redis:
         condition: service_healthy
+    restart: unless-stopped
 
-  beat:
-    build: .
-    command: celery -A config beat -l info
-    volumes:
-      - .:/app
-      - /app/.venv
-    env_file: .env
+  web:
+    build:
+      context: ./web
+      dockerfile: Dockerfile
+    environment:
+      ORIGIN: ${APP_ORIGIN:-http://localhost:8080}
     depends_on:
-      db:
+      api:
         condition: service_healthy
-      redis:
-        condition: service_healthy
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.tucano-web.rule=PathPrefix(`/`)
+      - traefik.http.routers.tucano-web.priority=1
+      - traefik.http.routers.tucano-web.entrypoints=web
+      - traefik.http.services.tucano-web.loadbalancer.server.port=3000
+    restart: unless-stopped
 
-  caddy:
-    image: caddy:2-alpine
-    # Portas 80/443 do host livres na VPS de produção; em dev local, mapeadas
-    # para 8080/8443 para não colidir com outros projetos na mesma máquina.
+  traefik:
+    image: traefik:v3.7.13
+    command:
+      - --api.dashboard=false
+      - --providers.docker=true
+      - --providers.docker.exposedbydefault=false
+      - --entrypoints.web.address=:80
+      - --accesslog=true
+      - --log.format=json
+      - --accesslog.format=json
     ports:
-      - "${CADDY_HTTP_PORT:-8080}:80"
-      - "${CADDY_HTTPS_PORT:-8443}:443"
+      - ${HTTP_PORT:-8080}:80
     volumes:
-      - ./docker/Caddyfile:/etc/caddy/Caddyfile
-      - static_data:/srv/static
-      - media_data:/srv/media
-      - caddy_data:/data
-      - caddy_config:/config
+      - /var/run/docker.sock:/var/run/docker.sock:ro
     depends_on:
       - web
+    restart: unless-stopped
 
 volumes:
   postgres_data:
-  static_data:
-  media_data:
-  caddy_data:
-  caddy_config:
+  redis_data:
+  uploads_data:

@@ -4,6 +4,8 @@ __pycache__/
 .python-version-local
 
 .env
+.env.*
+!.env.example
 db.sqlite3
 staticfiles/
 media/
@@ -16,3 +18,14 @@ celerybeat-schedule
 .DS_Store
 .idea/
 .vscode/
+
+# Go
+bin/
+coverage.out
+
+# SvelteKit / Node
+web/node_modules/
+web/.svelte-kit/
+web/build/
+web/.vite/
+web/coverage/

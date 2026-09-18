@@ -1,0 +1,5 @@
+DROP TABLE IF EXISTS audit_events;
+DROP TABLE IF EXISTS system_locations;
+DROP EXTENSION IF EXISTS pgcrypto;
+DROP EXTENSION IF EXISTS postgis;
+
